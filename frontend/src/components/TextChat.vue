@@ -112,6 +112,7 @@ async function scrollToBottom() {
   width: 100%;
   max-width: 600px;
   height: 500px;
+  color: #333;
 }
 
 .message-list {
