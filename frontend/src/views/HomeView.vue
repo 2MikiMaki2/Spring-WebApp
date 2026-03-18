@@ -1,9 +1,23 @@
 <script setup>
-import TheWelcome from '../components/TheWelcome.vue'
+import VoiceChat from '../components/VoiceChat.vue'
 </script>
 
 <template>
   <main>
-    <TheWelcome />
+    <h1>Language Practice</h1>
+    <VoiceChat />
   </main>
 </template>
+
+<style scoped>
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+}
+
+h1 {
+  margin-bottom: 1rem;
+}
+</style>

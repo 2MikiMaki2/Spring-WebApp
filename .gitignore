@@ -8,3 +8,5 @@ backend/venv/
 .vscode/
 
 __pycache__/
+
+deployment-steps.txt
