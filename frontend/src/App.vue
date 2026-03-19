@@ -1,13 +1,43 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
+import { ref, watch } from 'vue'
+import { RouterLink, RouterView, useRouter, useRoute } from 'vue-router'
+
+const router = useRouter()
+const route = useRoute()
+const userName = ref(localStorage.getItem('userName') || '')
+const isLoggedIn = ref(!!localStorage.getItem('token'))
+
+// After navigating (e.g., from login to home), re-check localStorage
+// so the nav bar updates to show the user's name and logout button.
+watch(
+  () => route.path,
+  () => {
+    userName.value = localStorage.getItem('userName') || ''
+    isLoggedIn.value = !!localStorage.getItem('token')
+  },
+)
+
+function logout() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('userName')
+  isLoggedIn.value = false
+  userName.value = ''
+  router.push('/login')
+}
 </script>
 
 <template>
-  <header>
+  <header v-if="isLoggedIn">
     <nav>
-      <RouterLink to="/">Home</RouterLink>
-      <RouterLink to="/voice">Voice</RouterLink>
-      <RouterLink to="/text">Text</RouterLink>
+      <div class="nav-links">
+        <RouterLink to="/">Home</RouterLink>
+        <RouterLink to="/voice">Voice</RouterLink>
+        <RouterLink to="/text">Text</RouterLink>
+      </div>
+      <div class="nav-user">
+        <span class="user-name">{{ userName }}</span>
+        <button @click="logout" class="logout-btn">Log out</button>
+      </div>
     </nav>
   </header>
 
@@ -22,21 +52,53 @@ header {
 
 nav {
   display: flex;
-  gap: 1.5rem;
+  justify-content: space-between;
+  align-items: center;
   font-size: 1rem;
 }
 
-nav a {
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav-links a {
   text-decoration: none;
   color: #666;
 }
 
-nav a.router-link-exact-active {
+.nav-links a.router-link-exact-active {
   color: #4a9c6d;
   font-weight: bold;
 }
 
-nav a:hover {
+.nav-links a:hover {
   color: #4a9c6d;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-name {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.logout-btn {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  color: #666;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  border-color: #999;
+  color: #333;
 }
 </style>

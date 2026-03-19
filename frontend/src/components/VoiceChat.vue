@@ -1,14 +1,13 @@
 <script setup>
 import { ref, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 
 const BACKEND_URL = 'https://backend-production-2cd9.up.railway.app'
+const router = useRouter()
 
-// Reactive state that the template reads to update the UI.
-const status = ref('idle') // idle | connecting | connected | error
+const status = ref('idle')
 const errorMessage = ref('')
 
-// These are not reactive — the template doesn't need to read them.
-// They're just references we hold so we can clean them up later.
 let peerConnection = null
 let dataChannel = null
 let audioElement = null
@@ -20,46 +19,52 @@ async function startConversation() {
 
   try {
     // Step 1: Get an ephemeral token from our backend.
+    // Now includes the JWT so the backend knows who we are.
+    const token = localStorage.getItem('token')
     const tokenResponse = await fetch(`${BACKEND_URL}/api/token`, {
       method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
+
+    if (tokenResponse.status === 401) {
+      // JWT expired or invalid — send user back to login.
+      localStorage.removeItem('token')
+      localStorage.removeItem('userName')
+      router.push('/login')
+      return
+    }
+
     if (!tokenResponse.ok) {
       throw new Error('Failed to get token from backend')
     }
+
     const tokenData = await tokenResponse.json()
     const ephemeralKey = tokenData.value
 
     // Step 2: Create a WebRTC peer connection.
-    // This is the object that manages the audio connection to OpenAI.
     const pc = new RTCPeerConnection()
     peerConnection = pc
 
     // Step 3: Set up audio playback.
-    // When OpenAI sends audio back, it arrives as a "track" on the
-    // peer connection. We pipe it into an <audio> element to play it.
     audioElement = document.createElement('audio')
     audioElement.autoplay = true
     pc.ontrack = (event) => {
       audioElement.srcObject = event.streams[0]
     }
 
-    // Step 4: Capture the user's microphone and add it to the connection.
-    // getUserMedia asks the browser for mic access — the user will see
-    // a permission popup the first time.
+    // Step 4: Capture the user's microphone.
     mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true })
     pc.addTrack(mediaStream.getTracks()[0])
 
-    // Step 5: Create a "data channel" for sending/receiving control events.
-    // OpenAI uses this channel for things like session updates and
-    // conversation events. We listen for open/close to track status.
+    // Step 5: Create a data channel for control events.
     dataChannel = pc.createDataChannel('oai-events')
     dataChannel.onopen = () => {
       status.value = 'connected'
     }
 
-    // Step 6: SDP handshake — this is how WebRTC connections are established.
-    // Our browser creates an "offer" describing what it can do (send audio,
-    // receive audio, etc.), and OpenAI responds with an "answer" accepting.
+    // Step 6: SDP handshake with OpenAI.
     const offer = await pc.createOffer()
     await pc.setLocalDescription(offer)
 
@@ -82,7 +87,6 @@ async function startConversation() {
     }
     await pc.setRemoteDescription(answer)
 
-    // If the connection drops unexpectedly, update the status.
     pc.oniceconnectionstatechange = () => {
       if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
         stopConversation()
@@ -97,38 +101,31 @@ async function startConversation() {
 }
 
 function stopConversation() {
-  // Close the data channel.
   if (dataChannel) {
     dataChannel.close()
     dataChannel = null
   }
 
-  // Close the peer connection (stops all audio streaming).
   if (peerConnection) {
     peerConnection.close()
     peerConnection = null
   }
 
-  // Release the microphone so the browser tab doesn't keep showing
-  // the "recording" indicator.
   if (mediaStream) {
     mediaStream.getTracks().forEach((track) => track.stop())
     mediaStream = null
   }
 
-  // Clean up the audio playback element.
   if (audioElement) {
     audioElement.srcObject = null
     audioElement = null
   }
 
-  // Only reset to idle if we're not showing an error.
   if (status.value !== 'error') {
     status.value = 'idle'
   }
 }
 
-// If the user navigates away from this page, clean up the connection.
 onUnmounted(() => {
   stopConversation()
 })

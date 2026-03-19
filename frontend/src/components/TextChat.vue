@@ -1,12 +1,10 @@
 <script setup>
 import { ref, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 
 const BACKEND_URL = 'https://backend-production-2cd9.up.railway.app'
+const router = useRouter()
 
-// The conversation history — an array of { role, content } objects.
-// This grows as the user and assistant exchange messages, and the
-// entire array is sent to the backend on every request so OpenAI
-// has full context of the conversation.
 const messages = ref([])
 const userInput = ref('')
 const isLoading = ref(false)
@@ -16,26 +14,34 @@ async function sendMessage() {
   const text = userInput.value.trim()
   if (!text || isLoading.value) return
 
-  // Add the user's message to the conversation history.
   messages.value.push({ role: 'user', content: text })
   userInput.value = ''
   isLoading.value = true
   scrollToBottom()
 
   try {
+    const token = localStorage.getItem('token')
     const response = await fetch(`${BACKEND_URL}/api/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ messages: messages.value }),
     })
+
+    if (response.status === 401) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('userName')
+      router.push('/login')
+      return
+    }
 
     if (!response.ok) {
       throw new Error('Failed to get response')
     }
 
     const data = await response.json()
-
-    // Add the assistant's reply to the conversation history.
     messages.value.push({ role: 'assistant', content: data.reply })
   } catch (err) {
     console.error('Chat error:', err)
@@ -50,7 +56,6 @@ async function sendMessage() {
 }
 
 function handleKeydown(event) {
-  // Send on Enter, but allow Shift+Enter for newlines.
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault()
     sendMessage()
@@ -58,8 +63,6 @@ function handleKeydown(event) {
 }
 
 async function scrollToBottom() {
-  // nextTick waits for Vue to finish updating the DOM after a state
-  // change, so the new message element exists before we scroll to it.
   await nextTick()
   if (messageListEl.value) {
     messageListEl.value.scrollTop = messageListEl.value.scrollHeight
