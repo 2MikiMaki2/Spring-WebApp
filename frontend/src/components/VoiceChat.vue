@@ -1,25 +1,56 @@
 <script setup>
 import { ref, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { onBeforeRouteLeave } from 'vue-router'
 
 const BACKEND_URL = 'https://backend-production-2cd9.up.railway.app'
 const router = useRouter()
 
 const status = ref('idle')
 const errorMessage = ref('')
+const messages = ref([])
 
 let peerConnection = null
 let dataChannel = null
 let audioElement = null
 let mediaStream = null
+let conversationSaved = false
+
+function authHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${localStorage.getItem('token')}`,
+  }
+}
+
+async function saveConversation() {
+  if (messages.value.length === 0 || conversationSaved) return
+
+  try {
+    await fetch(`${BACKEND_URL}/api/conversations`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        mode: 'voice',
+        messages: messages.value,
+      }),
+    })
+    conversationSaved = true
+  } catch (err) {
+    console.error('Failed to save conversation:', err)
+  }
+}
 
 async function startConversation() {
   status.value = 'connecting'
   errorMessage.value = ''
 
+  // Reset transcript state for a new conversation.
+  messages.value = []
+  conversationSaved = false
+
   try {
     // Step 1: Get an ephemeral token from our backend.
-    // Now includes the JWT so the backend knows who we are.
     const token = localStorage.getItem('token')
     const tokenResponse = await fetch(`${BACKEND_URL}/api/token`, {
       method: 'POST',
@@ -29,7 +60,6 @@ async function startConversation() {
     })
 
     if (tokenResponse.status === 401) {
-      // JWT expired or invalid — send user back to login.
       localStorage.removeItem('token')
       localStorage.removeItem('userName')
       router.push('/login')
@@ -60,8 +90,41 @@ async function startConversation() {
 
     // Step 5: Create a data channel for control events.
     dataChannel = pc.createDataChannel('oai-events')
+
     dataChannel.onopen = () => {
       status.value = 'connected'
+
+      // Enable transcription of the user's speech so we can save it.
+      dataChannel.send(JSON.stringify({
+        type: 'session.update',
+        session: {
+          input_audio_transcription: {
+            model: 'whisper-1',
+          },
+        },
+      }))
+    }
+
+    dataChannel.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data)
+
+        if (
+          msg.type === 'conversation.item.input_audio_transcription.completed'
+          && msg.transcript
+        ) {
+          messages.value.push({ role: 'user', content: msg.transcript })
+        }
+
+        if (
+          msg.type === 'response.output_audio_transcript.done'
+          && msg.transcript
+        ) {
+          messages.value.push({ role: 'assistant', content: msg.transcript })
+        }
+      } catch {
+        // Ignore non-JSON or unexpected messages.
+      }
     }
 
     // Step 6: SDP handshake with OpenAI.
@@ -100,7 +163,9 @@ async function startConversation() {
   }
 }
 
-function stopConversation() {
+async function stopConversation() {
+  await saveConversation()
+
   if (dataChannel) {
     dataChannel.close()
     dataChannel = null
@@ -125,6 +190,11 @@ function stopConversation() {
     status.value = 'idle'
   }
 }
+
+// Save the conversation automatically when the user navigates away.
+onBeforeRouteLeave(async () => {
+  await saveConversation()
+})
 
 onUnmounted(() => {
   stopConversation()
