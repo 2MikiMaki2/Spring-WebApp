@@ -1,6 +1,7 @@
 <script setup>
 import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { onBeforeRouteLeave } from 'vue-router'
 
 const BACKEND_URL = 'https://backend-production-2cd9.up.railway.app'
 const router = useRouter()
@@ -9,6 +10,49 @@ const messages = ref([])
 const userInput = ref('')
 const isLoading = ref(false)
 const messageListEl = ref(null)
+
+// Track whether the current conversation has already been saved,
+// so we don't save it twice (once on "New Chat" and again on navigate away).
+let conversationSaved = false
+
+function authHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${localStorage.getItem('token')}`,
+  }
+}
+
+async function saveConversation() {
+  // Only save if there are messages and we haven't saved already.
+  if (messages.value.length === 0 || conversationSaved) return
+
+  try {
+    await fetch(`${BACKEND_URL}/api/conversations`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        mode: 'text',
+        messages: messages.value,
+      }),
+    })
+    conversationSaved = true
+  } catch (err) {
+    console.error('Failed to save conversation:', err)
+  }
+}
+
+async function newChat() {
+  await saveConversation()
+  messages.value = []
+  conversationSaved = false
+}
+
+// Save the conversation automatically when the user navigates away.
+// onBeforeRouteLeave fires before Vue removes this component, giving
+// us time to make the async request.
+onBeforeRouteLeave(async () => {
+  await saveConversation()
+})
 
 async function sendMessage() {
   const text = userInput.value.trim()
@@ -20,13 +64,9 @@ async function sendMessage() {
   scrollToBottom()
 
   try {
-    const token = localStorage.getItem('token')
     const response = await fetch(`${BACKEND_URL}/api/chat`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: authHeaders(),
       body: JSON.stringify({ messages: messages.value }),
     })
 
@@ -72,6 +112,16 @@ async function scrollToBottom() {
 
 <template>
   <div class="text-chat">
+    <div class="chat-toolbar">
+      <button
+        @click="newChat"
+        :disabled="messages.length === 0 || isLoading"
+        class="new-chat-btn"
+      >
+        New Chat
+      </button>
+    </div>
+
     <div class="message-list" ref="messageListEl">
       <p v-if="messages.length === 0" class="empty-state">
         Type a message to start practicing...
@@ -116,6 +166,33 @@ async function scrollToBottom() {
   max-width: 600px;
   height: 500px;
   color: #333;
+}
+
+.chat-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.new-chat-btn {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #666;
+  cursor: pointer;
+}
+
+.new-chat-btn:hover:not(:disabled) {
+  border-color: #999;
+  color: #333;
+}
+
+.new-chat-btn:disabled {
+  color: #ccc;
+  border-color: #eee;
+  cursor: not-allowed;
 }
 
 .message-list {
