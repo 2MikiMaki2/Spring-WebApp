@@ -29,6 +29,16 @@ const router = createRouter({
       name: 'settings',
       component: () => import('../views/SettingsView.vue'),
     },
+    {
+      path: '/history',
+      name: 'history',
+      component: () => import('../views/HistoryView.vue'),
+    },
+    {
+      path: '/history/:id',
+      name: 'conversation',
+      component: () => import('../views/ConversationView.vue'),
+    },
   ],
 })
 

@@ -31,6 +31,7 @@ function logout() {
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/voice">Voice</RouterLink>
         <RouterLink to="/text">Text</RouterLink>
+        <RouterLink to="/history">History</RouterLink>
         <RouterLink to="/settings">Settings</RouterLink>
       </div>
       <div class="nav-user">
