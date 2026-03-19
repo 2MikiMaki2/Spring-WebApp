@@ -93,16 +93,6 @@ async function startConversation() {
 
     dataChannel.onopen = () => {
       status.value = 'connected'
-
-      // Enable transcription of the user's speech so we can save it.
-      dataChannel.send(JSON.stringify({
-        type: 'session.update',
-        session: {
-          input_audio_transcription: {
-            model: 'whisper-1',
-          },
-        },
-      }))
     }
 
     dataChannel.onmessage = (event) => {
