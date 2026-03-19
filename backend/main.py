@@ -429,6 +429,11 @@ async def create_realtime_token(user=Depends(get_current_user)):
                     "model": "gpt-realtime",
                     "instructions": prompt,
                     "audio": {
+                        "input": {
+                            "transcription": {
+                                "model": "whisper-1",
+                            },
+                        },
                         "output": {
                             "voice": prefs["voice"],
                         }
