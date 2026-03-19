@@ -60,6 +60,25 @@ async def init_db():
             )
         """)
 
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS conversations (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                mode TEXT NOT NULL,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS messages (
+                id SERIAL PRIMARY KEY,
+                conversation_id INTEGER NOT NULL REFERENCES conversations(id),
+                role TEXT NOT NULL,
+                content TEXT NOT NULL,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+
 
 async def close_db():
     global db_pool
@@ -70,7 +89,6 @@ async def close_db():
 # --- Helpers ---
 
 def build_system_prompt(language: str, custom_prompt: str) -> str:
-    """Build a system prompt from the user's preferences."""
     base = (
         f"You are a {language} conversation partner. "
         f"Speak in {language}. "
@@ -83,7 +101,6 @@ def build_system_prompt(language: str, custom_prompt: str) -> str:
 
 
 async def get_user_preferences(user_id: int):
-    """Fetch preferences for a user, or return defaults if none exist."""
     async with db_pool.acquire() as conn:
         prefs = await conn.fetchrow(
             "SELECT * FROM preferences WHERE user_id = $1", user_id
@@ -170,6 +187,11 @@ class PreferencesUpdate(BaseModel):
     custom_prompt: Optional[str] = None
 
 
+class SaveConversationRequest(BaseModel):
+    mode: str
+    messages: list[Message]
+
+
 # --- Endpoints ---
 
 @app.get("/health")
@@ -208,7 +230,6 @@ async def auth_google(request: GoogleAuthRequest):
                 "VALUES ($1, $2, $3) RETURNING *",
                 google_id, email, name,
             )
-            # Create default preferences for the new user.
             await conn.execute(
                 "INSERT INTO preferences (user_id) VALUES ($1)",
                 user["id"],
@@ -225,9 +246,10 @@ async def auth_google(request: GoogleAuthRequest):
     }
 
 
+# --- Preferences ---
+
 @app.get("/api/preferences")
 async def get_preferences(user=Depends(get_current_user)):
-    """Return the current user's preferences and the available options."""
     prefs = await get_user_preferences(user["id"])
     return {
         "preferences": {
@@ -246,24 +268,18 @@ async def get_preferences(user=Depends(get_current_user)):
 async def update_preferences(
     request: PreferencesUpdate, user=Depends(get_current_user)
 ):
-    """Update the current user's preferences."""
-
-    # Validate inputs if provided.
     if request.target_language and request.target_language not in SUPPORTED_LANGUAGES:
         raise HTTPException(status_code=400, detail="Unsupported language")
     if request.voice and request.voice not in SUPPORTED_VOICES:
         raise HTTPException(status_code=400, detail="Unsupported voice")
 
     async with db_pool.acquire() as conn:
-        # Ensure a preferences row exists (handles users created before
-        # this feature was added).
         await conn.execute(
             "INSERT INTO preferences (user_id) VALUES ($1) "
             "ON CONFLICT (user_id) DO NOTHING",
             user["id"],
         )
 
-        # Build the update dynamically based on which fields were sent.
         updates = {}
         if request.target_language is not None:
             updates["target_language"] = request.target_language
@@ -273,7 +289,6 @@ async def update_preferences(
             updates["custom_prompt"] = request.custom_prompt
 
         if updates:
-            # Build a SET clause like: target_language = $2, voice = $3
             set_parts = []
             values = [user["id"]]
             for i, (key, val) in enumerate(updates.items(), start=2):
@@ -296,12 +311,108 @@ async def update_preferences(
     }
 
 
+# --- Conversations ---
+
+@app.post("/api/conversations")
+async def save_conversation(
+    request: SaveConversationRequest, user=Depends(get_current_user)
+):
+    """Save a completed conversation (text or voice) with all its messages."""
+
+    if not request.messages:
+        raise HTTPException(status_code=400, detail="No messages to save")
+
+    async with db_pool.acquire() as conn:
+        # Create the conversation record.
+        conv = await conn.fetchrow(
+            "INSERT INTO conversations (user_id, mode) "
+            "VALUES ($1, $2) RETURNING *",
+            user["id"], request.mode,
+        )
+
+        # Insert all messages in one batch.
+        await conn.executemany(
+            "INSERT INTO messages (conversation_id, role, content) "
+            "VALUES ($1, $2, $3)",
+            [(conv["id"], m.role, m.content) for m in request.messages],
+        )
+
+    return {"conversation_id": conv["id"]}
+
+
+@app.get("/api/conversations")
+async def list_conversations(user=Depends(get_current_user)):
+    """List all conversations for the current user, newest first."""
+
+    async with db_pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT c.id, c.mode, c.created_at, "
+            "(SELECT content FROM messages WHERE conversation_id = c.id "
+            " ORDER BY id LIMIT 1) AS first_message "
+            "FROM conversations c "
+            "WHERE c.user_id = $1 "
+            "ORDER BY c.created_at DESC",
+            user["id"],
+        )
+
+    return {
+        "conversations": [
+            {
+                "id": row["id"],
+                "mode": row["mode"],
+                "created_at": row["created_at"].isoformat(),
+                # Use the first message as a preview, truncated.
+                "preview": (row["first_message"] or "")[:80],
+            }
+            for row in rows
+        ],
+    }
+
+
+@app.get("/api/conversations/{conversation_id}")
+async def get_conversation(conversation_id: int, user=Depends(get_current_user)):
+    """Get the full transcript of a single conversation."""
+
+    async with db_pool.acquire() as conn:
+        conv = await conn.fetchrow(
+            "SELECT * FROM conversations "
+            "WHERE id = $1 AND user_id = $2",
+            conversation_id, user["id"],
+        )
+
+        if not conv:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+
+        msgs = await conn.fetch(
+            "SELECT role, content, created_at FROM messages "
+            "WHERE conversation_id = $1 ORDER BY id",
+            conversation_id,
+        )
+
+    return {
+        "conversation": {
+            "id": conv["id"],
+            "mode": conv["mode"],
+            "created_at": conv["created_at"].isoformat(),
+            "messages": [
+                {
+                    "role": row["role"],
+                    "content": row["content"],
+                    "created_at": row["created_at"].isoformat(),
+                }
+                for row in msgs
+            ],
+        },
+    }
+
+
+# --- Voice & Chat ---
+
 @app.post("/api/token")
 async def create_realtime_token(user=Depends(get_current_user)):
     if not OPENAI_API_KEY:
         raise HTTPException(status_code=500, detail="OpenAI API key not configured")
 
-    # Use the user's preferences to configure the session.
     prefs = await get_user_preferences(user["id"])
     prompt = build_system_prompt(prefs["target_language"], prefs["custom_prompt"])
 
@@ -340,7 +451,6 @@ async def chat(request: ChatRequest, user=Depends(get_current_user)):
     if not OPENAI_API_KEY:
         raise HTTPException(status_code=500, detail="OpenAI API key not configured")
 
-    # Use the user's preferences to build the system prompt.
     prefs = await get_user_preferences(user["id"])
     prompt = build_system_prompt(prefs["target_language"], prefs["custom_prompt"])
 
