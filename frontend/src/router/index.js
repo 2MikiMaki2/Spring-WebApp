@@ -24,12 +24,14 @@ const router = createRouter({
       name: 'text',
       component: () => import('../views/TextChatView.vue'),
     },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: () => import('../views/SettingsView.vue'),
+    },
   ],
 })
 
-// Navigation guard: before every page change, check if the user is logged in.
-// If not, redirect to the login page. The login page itself is excluded
-// from this check (otherwise you'd get an infinite redirect loop).
 router.beforeEach((to) => {
   const token = localStorage.getItem('token')
   if (!token && to.name !== 'login') {

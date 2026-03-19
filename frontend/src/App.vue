@@ -7,8 +7,6 @@ const route = useRoute()
 const userName = ref(localStorage.getItem('userName') || '')
 const isLoggedIn = ref(!!localStorage.getItem('token'))
 
-// After navigating (e.g., from login to home), re-check localStorage
-// so the nav bar updates to show the user's name and logout button.
 watch(
   () => route.path,
   () => {
@@ -33,6 +31,7 @@ function logout() {
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/voice">Voice</RouterLink>
         <RouterLink to="/text">Text</RouterLink>
+        <RouterLink to="/settings">Settings</RouterLink>
       </div>
       <div class="nav-user">
         <span class="user-name">{{ userName }}</span>

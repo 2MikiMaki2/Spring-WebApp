@@ -22,7 +22,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 
 #TODO: Hardcoded options for languages and voices. Is there ability to fetch from OpenAI in real time?
 SUPPORTED_LANGUAGES = [
-    "English", "French", "Spanish", "German", "Italian",
+    "English", "French", "Serbian", "Spanish", "German", "Italian",
     "Portuguese", "Japanese", "Korean", "Mandarin Chinese",
 ]
 
