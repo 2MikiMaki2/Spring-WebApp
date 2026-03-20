@@ -8,6 +8,7 @@ const route = useRoute()
 
 const conversation = ref(null)
 const isLoading = ref(true)
+const isDeleting = ref(false)
 const errorMessage = ref('')
 
 function authHeaders() {
@@ -47,6 +48,36 @@ onMounted(async () => {
   }
 })
 
+async function deleteConversation() {
+  if (!confirm('Delete this conversation? This cannot be undone.')) return
+
+  isDeleting.value = true
+
+  try {
+    const response = await fetch(
+      `${BACKEND_URL}/api/conversations/${route.params.id}`,
+      { method: 'DELETE', headers: authHeaders() },
+    )
+
+    if (response.status === 401) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('userName')
+      router.push('/login')
+      return
+    }
+
+    if (!response.ok) {
+      throw new Error('Failed to delete conversation')
+    }
+
+    router.push('/history')
+  } catch (err) {
+    console.error('Delete error:', err)
+    errorMessage.value = 'Failed to delete. Please try again.'
+    isDeleting.value = false
+  }
+}
+
 function formatDate(isoString) {
   const date = new Date(isoString)
   return date.toLocaleDateString(undefined, {
@@ -69,8 +100,17 @@ function formatDate(isoString) {
 
     <template v-else-if="conversation">
       <div class="conversation-header">
-        <span class="mode-badge" :class="conversation.mode">{{ conversation.mode }}</span>
-        <span class="date">{{ formatDate(conversation.created_at) }}</span>
+        <div class="header-left">
+          <span class="mode-badge" :class="conversation.mode">{{ conversation.mode }}</span>
+          <span class="date">{{ formatDate(conversation.created_at) }}</span>
+        </div>
+        <button
+          @click="deleteConversation"
+          :disabled="isDeleting"
+          class="delete-btn"
+        >
+          {{ isDeleting ? 'Deleting...' : 'Delete' }}
+        </button>
       </div>
 
       <div class="message-list">
@@ -114,10 +154,18 @@ main {
 }
 
 .conversation-header {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.header-left {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1.5rem;
 }
 
 .mode-badge {
@@ -141,6 +189,27 @@ main {
 .date {
   font-size: 0.85rem;
   color: #999;
+}
+
+.delete-btn {
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #c44b4b;
+  cursor: pointer;
+}
+
+.delete-btn:hover:not(:disabled) {
+  border-color: #c44b4b;
+  background-color: #c44b4b;
+  color: white;
+}
+
+.delete-btn:disabled {
+  color: #ccc;
+  cursor: not-allowed;
 }
 
 .message-list {
