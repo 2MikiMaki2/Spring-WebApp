@@ -405,6 +405,29 @@ async def get_conversation(conversation_id: int, user=Depends(get_current_user))
         },
     }
 
+@app.delete("/api/conversations/{conversation_id}")
+async def delete_conversation(conversation_id: int, user=Depends(get_current_user)):
+    """Delete a conversation and all its messages."""
+
+    async with db_pool.acquire() as conn:
+        conv = await conn.fetchrow(
+            "SELECT * FROM conversations WHERE id = $1 AND user_id = $2",
+            conversation_id, user["id"],
+        )
+
+        if not conv:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+
+        await conn.execute(
+            "DELETE FROM messages WHERE conversation_id = $1",
+            conversation_id,
+        )
+        await conn.execute(
+            "DELETE FROM conversations WHERE id = $1",
+            conversation_id,
+        )
+
+    return {"deleted": True}
 
 # --- Voice & Chat ---
 
