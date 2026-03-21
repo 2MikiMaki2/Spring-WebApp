@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
-const BACKEND_URL = 'https://backend-production-2cd9.up.railway.app'
+import { BACKEND_URL } from '../config.js'
 const router = useRouter()
 const isLoading = ref(true)
 const errorMessage = ref('')

@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 import os
 from datetime import datetime, timedelta, timezone
 from contextlib import asynccontextmanager
@@ -19,6 +22,7 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 JWT_SECRET = os.environ.get("JWT_SECRET")
 DATABASE_URL = os.environ.get("DATABASE_URL")
+FRONTEND_URL = os.environ.get("FRONTEND_URL")
 
 #TODO: Hardcoded options for languages and voices. Is there ability to fetch from OpenAI in real time?
 SUPPORTED_LANGUAGES = [
@@ -128,7 +132,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[FRONTEND_URL],
     allow_methods=["*"],
     allow_headers=["*"],
 )

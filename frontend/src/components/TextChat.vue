@@ -3,7 +3,7 @@ import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { onBeforeRouteLeave } from 'vue-router'
 
-const BACKEND_URL = 'https://backend-production-2cd9.up.railway.app'
+import { BACKEND_URL } from '../config.js'
 const router = useRouter()
 
 const messages = ref([])
