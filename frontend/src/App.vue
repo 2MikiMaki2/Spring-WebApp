@@ -28,7 +28,7 @@ function logout() {
   <header v-if="isLoggedIn">
     <nav>
       <div class="nav-links">
-        <RouterLink to="/">Home</RouterLink>
+        <RouterLink to="/" class="brand-link">frenchat</RouterLink>
         <RouterLink to="/voice">Voice</RouterLink>
         <RouterLink to="/text">Text</RouterLink>
         <RouterLink to="/history">History</RouterLink>
@@ -100,5 +100,11 @@ nav {
 .logout-btn:hover {
   border-color: #999;
   color: #333;
+}
+
+.brand-link {
+  font-weight: bold;
+  color: #1D9E75 !important;
+  font-size: 1.1rem;
 }
 </style>
