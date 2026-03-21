@@ -4,7 +4,6 @@ import TextChat from '../components/TextChat.vue'
 
 <template>
   <main>
-    <h1>Text Practice</h1>
     <TextChat />
   </main>
 </template>
@@ -14,7 +13,7 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem;
+  padding: 1rem 2rem;
 }
 
 h1 {

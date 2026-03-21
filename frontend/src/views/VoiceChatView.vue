@@ -4,7 +4,6 @@ import VoiceChat from '../components/VoiceChat.vue'
 
 <template>
   <main>
-    <h1>Voice Practice</h1>
     <VoiceChat />
   </main>
 </template>
@@ -14,7 +13,7 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem;
+  padding: 1rem 2rem;
 }
 
 h1 {

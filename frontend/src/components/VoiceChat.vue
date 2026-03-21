@@ -1,21 +1,81 @@
 <script setup>
-import { ref, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { onBeforeRouteLeave } from 'vue-router'
-import { authHeaders, handleUnauthorized } from '../auth.js'
 import { BACKEND_URL } from '../config.js'
+import { authHeaders, handleUnauthorized } from '../auth.js'
 
 const router = useRouter()
 
 const status = ref('idle')
 const errorMessage = ref('')
 const messages = ref([])
+const language = ref('')
+const sessionSeconds = ref(0)
+const transcriptEl = ref(null)
+const showTranscript = ref(true)
+const displayMessages = computed(() => messages.value.filter(m => m.role === 'assistant'))
 
 let peerConnection = null
 let dataChannel = null
 let audioElement = null
 let mediaStream = null
 let conversationSaved = false
+let timerInterval = null
+let assistantMsgIndex = -1
+
+// --- Preferences ---
+
+onMounted(async () => {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/preferences`, {
+      headers: authHeaders(),
+    })
+    if (response.status === 401) {
+      handleUnauthorized(router)
+      return
+    }
+    if (response.ok) {
+      const data = await response.json()
+      language.value = data.preferences.target_language
+    }
+  } catch (err) {
+    console.error('Failed to load preferences:', err)
+  }
+})
+
+// --- Timer ---
+
+function startTimer() {
+  sessionSeconds.value = 0
+  timerInterval = setInterval(() => {
+    sessionSeconds.value++
+  }, 1000)
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval)
+    timerInterval = null
+  }
+}
+
+function formatTime(totalSeconds) {
+  const mins = Math.floor(totalSeconds / 60)
+  const secs = totalSeconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+// --- Transcript scrolling ---
+
+async function scrollTranscript() {
+  await nextTick()
+  if (transcriptEl.value) {
+    transcriptEl.value.scrollTop = transcriptEl.value.scrollHeight
+  }
+}
+
+// --- Save ---
 
 async function saveConversation() {
   if (messages.value.length === 0 || conversationSaved) return
@@ -23,7 +83,10 @@ async function saveConversation() {
   try {
     await fetch(`${BACKEND_URL}/api/conversations`, {
       method: 'POST',
-      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      headers: {
+        ...authHeaders(),
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         mode: 'voice',
         messages: messages.value,
@@ -35,16 +98,16 @@ async function saveConversation() {
   }
 }
 
+// --- Connection ---
+
 async function startConversation() {
   status.value = 'connecting'
   errorMessage.value = ''
-
-  // Reset transcript state for a new conversation.
   messages.value = []
   conversationSaved = false
+  assistantMsgIndex = -1
 
   try {
-    // Step 1: Get an ephemeral token from our backend.
     const tokenResponse = await fetch(`${BACKEND_URL}/api/token`, {
       method: 'POST',
       headers: authHeaders(),
@@ -62,51 +125,65 @@ async function startConversation() {
     const tokenData = await tokenResponse.json()
     const ephemeralKey = tokenData.value
 
-    // Step 2: Create a WebRTC peer connection.
     const pc = new RTCPeerConnection()
     peerConnection = pc
 
-    // Step 3: Set up audio playback.
     audioElement = document.createElement('audio')
     audioElement.autoplay = true
     pc.ontrack = (event) => {
       audioElement.srcObject = event.streams[0]
     }
 
-    // Step 4: Capture the user's microphone.
     mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true })
     pc.addTrack(mediaStream.getTracks()[0])
 
-    // Step 5: Create a data channel for control events.
     dataChannel = pc.createDataChannel('oai-events')
 
     dataChannel.onopen = () => {
       status.value = 'connected'
+      startTimer()
     }
 
     dataChannel.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data)
 
+        // User transcript — appears as a complete block.
         if (
           msg.type === 'conversation.item.input_audio_transcription.completed'
           && msg.transcript
         ) {
           messages.value.push({ role: 'user', content: msg.transcript })
+          scrollTranscript()
         }
 
+        // Assistant transcript — streams word-by-word via deltas.
         if (
-          msg.type === 'response.output_audio_transcript.done'
-          && msg.transcript
+          msg.type === 'response.output_audio_transcript.delta'
+          && msg.delta
         ) {
-          messages.value.push({ role: 'assistant', content: msg.transcript })
+          if (assistantMsgIndex === -1) {
+            messages.value.push({ role: 'assistant', content: msg.delta })
+            assistantMsgIndex = messages.value.length - 1
+          } else {
+            messages.value[assistantMsgIndex].content += msg.delta
+          }
+          scrollTranscript()
+        }
+
+        // Assistant transcript complete — finalize and reset index.
+        if (msg.type === 'response.output_audio_transcript.done') {
+          if (assistantMsgIndex !== -1 && msg.transcript) {
+            messages.value[assistantMsgIndex].content = msg.transcript
+          }
+          assistantMsgIndex = -1
+          scrollTranscript()
         }
       } catch {
         // Ignore non-JSON or unexpected messages.
       }
     }
 
-    // Step 6: SDP handshake with OpenAI.
     const offer = await pc.createOffer()
     await pc.setLocalDescription(offer)
 
@@ -143,6 +220,7 @@ async function startConversation() {
 }
 
 async function stopConversation() {
+  stopTimer()
   await saveConversation()
 
   if (dataChannel) {
@@ -165,43 +243,99 @@ async function stopConversation() {
     audioElement = null
   }
 
+  assistantMsgIndex = -1
+
   if (status.value !== 'error') {
     status.value = 'idle'
   }
 }
 
-// Save the conversation automatically when the user navigates away.
 onBeforeRouteLeave(async () => {
   await saveConversation()
 })
 
 onUnmounted(() => {
+  stopTimer()
   stopConversation()
 })
 </script>
 
 <template>
   <div class="voice-chat">
-    <p class="status-text">
-      <span v-if="status === 'idle'">Ready to practice</span>
-      <span v-else-if="status === 'connecting'">Connecting...</span>
-      <span v-else-if="status === 'connected'">Connected — start speaking!</span>
-      <span v-else-if="status === 'error'">{{ errorMessage }}</span>
-    </p>
+    <!-- Top bar -->
+    <div class="top-bar">
+      <span v-if="language" class="lang-badge">{{ language }}</span>
+      <span v-if="status === 'connected'" class="timer">{{ formatTime(sessionSeconds) }}</span>
+    </div>
 
-    <button
-      v-if="status === 'idle' || status === 'error'"
-      @click="startConversation"
-      class="start-btn"
-    >
-      Start conversation
-    </button>
+    <!-- Center area -->
+    <div class="center-area">
+      <div class="pulse-ring" :class="status === 'connected' ? 'pulse-active' : 'pulse-idle'">
+        <!-- Idle: mic icon -->
+        <svg v-if="status !== 'connected'" class="mic-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+        </svg>
+        <!-- Connected: animated wave bars -->
+        <div v-else class="wave-bars">
+          <div class="wave-bar wb1"></div>
+          <div class="wave-bar wb2"></div>
+          <div class="wave-bar wb3"></div>
+          <div class="wave-bar wb4"></div>
+          <div class="wave-bar wb5"></div>
+        </div>
+      </div>
 
-    <button v-else-if="status === 'connecting'" disabled class="connecting-btn">
-      Connecting...
-    </button>
+      <p class="status-text">
+        <span v-if="status === 'idle'">Ready to practice</span>
+        <span v-else-if="status === 'connecting'">Connecting...</span>
+        <span v-else-if="status === 'connected'">Connected — start speaking!</span>
+        <span v-else-if="status === 'error'">{{ errorMessage }}</span>
+      </p>
 
-    <button v-else @click="stopConversation" class="stop-btn">Stop</button>
+      <button
+        v-if="status === 'idle' || status === 'error'"
+        @click="startConversation"
+        class="btn-start"
+      >
+        Start conversation
+      </button>
+
+      <button v-else-if="status === 'connecting'" disabled class="btn-connecting">
+        Connecting...
+      </button>
+
+      <button v-else @click="stopConversation" class="btn-stop">
+        Stop
+      </button>
+    </div>
+
+    <!-- Live transcript -->
+    <div class="transcript-section">
+      <div class="transcript-header">
+        <p class="transcript-label">Live transcript</p>
+        <button @click="showTranscript = !showTranscript" class="toggle-btn">
+          {{ showTranscript ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+
+      <template v-if="showTranscript">
+        <div v-if="displayMessages.length === 0" class="empty-transcript">
+          Your conversation will appear here...
+        </div>
+
+        <div v-else class="transcript-scroll" ref="transcriptEl">
+          <div
+            v-for="(msg, index) in displayMessages"
+            :key="index"
+            class="t-msg t-assistant"
+          >
+            <p class="t-content">{{ msg.content }}</p>
+          </div>
+        </div>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -210,45 +344,238 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
-  padding: 2rem;
+  padding: 0 2rem 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* --- Top bar --- */
+
+.top-bar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+.lang-badge {
+  font-size: 0.8rem;
+  font-weight: bold;
+  background-color: #e1f5ee;
+  color: #0F6E56;
+  padding: 0.2rem 0.65rem;
+  border-radius: 12px;
+}
+
+.timer {
+  font-size: 0.85rem;
+  color: #999;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Center area --- */
+
+.center-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 0 2rem;
+}
+
+.pulse-ring {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulse-idle {
+  background-color: #252525;
+  border: 1px solid #ddd;
+}
+
+.pulse-active {
+  background-color: #e1f5ee;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(29, 158, 117, 0.25); }
+  50% { box-shadow: 0 0 0 18px rgba(29, 158, 117, 0); }
+}
+
+.mic-icon {
+  color: #999;
+}
+
+.wave-bars {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  height: 28px;
+}
+
+.wave-bar {
+  width: 4px;
+  border-radius: 2px;
+  background-color: #1D9E75;
+}
+
+.wb1 { height: 12px; animation: wb 0.8s ease-in-out infinite; }
+.wb2 { height: 20px; animation: wb 0.8s ease-in-out 0.15s infinite; }
+.wb3 { height: 16px; animation: wb 0.8s ease-in-out 0.3s infinite; }
+.wb4 { height: 24px; animation: wb 0.8s ease-in-out 0.45s infinite; }
+.wb5 { height: 14px; animation: wb 0.8s ease-in-out 0.6s infinite; }
+
+@keyframes wb {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.4); }
 }
 
 .status-text {
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #666;
 }
 
 button {
-  padding: 0.75rem 2rem;
+  padding: 0.6rem 1.75rem;
   font-size: 1rem;
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: none;
   cursor: pointer;
-  transition: background-color 0.2s;
+  font-weight: 500;
 }
 
-.start-btn {
-  background-color: #4a9c6d;
+.btn-start {
+  background-color: #1D9E75;
   color: white;
 }
 
-.start-btn:hover {
-  background-color: #3d8259;
+.btn-start:hover {
+  background-color: #0F6E56;
 }
 
-.stop-btn {
-  background-color: #c44b4b;
+.btn-stop {
+  background-color: #E24B4A;
   color: white;
 }
 
-.stop-btn:hover {
-  background-color: #a33d3d;
+.btn-stop:hover {
+  background-color: #A32D2D;
 }
 
-.connecting-btn {
+.btn-connecting {
   background-color: #888;
   color: white;
   cursor: not-allowed;
+}
+
+/* --- Transcript --- */
+
+.transcript-section {
+  width: 100%;
+}
+
+.transcript-label {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.5rem;
+}
+
+.empty-transcript {
+  font-size: 0.85rem;
+  color: #bbb;
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.transcript-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.t-msg {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  max-width: 85%;
+}
+
+.t-user {
+  background-color: #e1f5ee;
+  align-self: flex-end;
+}
+
+.t-assistant {
+  background-color: #f5f5f5;
+  align-self: flex-start;
+}
+
+.t-role {
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #0F6E56;
+  margin-bottom: 0.15rem;
+}
+
+.t-assistant .t-role {
+  color: #999;
+}
+
+.t-content {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #333;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .voice-chat {
+    padding: 0 1rem 1rem;
+  }
+
+  .center-area {
+    padding: 1rem 0 1.5rem;
+  }
+
+  .transcript-scroll {
+    max-height: 250px;
+  }
+}
+
+.transcript-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.transcript-header .transcript-label {
+  margin: 0;
+}
+
+.toggle-btn {
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #666;
+  cursor: pointer;
+  font-weight: 400;
+}
+
+.toggle-btn:hover {
+  border-color: #999;
+  color: #333;
 }
 </style>
