@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-
+import { authHeaders, handleUnauthorized } from '../auth.js'
+import { formatDate } from '../utils.js'
 import { BACKEND_URL } from '../config.js'
+
 const router = useRouter()
 const route = useRoute()
 
@@ -10,10 +12,6 @@ const conversation = ref(null)
 const isLoading = ref(true)
 const isDeleting = ref(false)
 const errorMessage = ref('')
-
-function authHeaders() {
-  return { Authorization: `Bearer ${localStorage.getItem('token')}` }
-}
 
 onMounted(async () => {
   try {
@@ -23,9 +21,7 @@ onMounted(async () => {
     )
 
     if (response.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('userName')
-      router.push('/login')
+      handleUnauthorized(router)
       return
     }
 
@@ -60,9 +56,7 @@ async function deleteConversation() {
     )
 
     if (response.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('userName')
-      router.push('/login')
+      handleUnauthorized(router)
       return
     }
 
@@ -76,17 +70,6 @@ async function deleteConversation() {
     errorMessage.value = 'Failed to delete. Please try again.'
     isDeleting.value = false
   }
-}
-
-function formatDate(isoString) {
-  const date = new Date(isoString)
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
 }
 </script>
 

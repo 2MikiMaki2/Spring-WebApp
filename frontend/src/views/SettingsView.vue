@@ -1,8 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-
+import { authHeaders, handleUnauthorized } from '../auth.js'
 import { BACKEND_URL } from '../config.js'
+
 const router = useRouter()
 
 const targetLanguage = ref('')
@@ -14,10 +15,6 @@ const isLoading = ref(true)
 const isSaving = ref(false)
 const saveMessage = ref('')
 
-function authHeaders() {
-  return { Authorization: `Bearer ${localStorage.getItem('token')}` }
-}
-
 onMounted(async () => {
   try {
     const response = await fetch(`${BACKEND_URL}/api/preferences`, {
@@ -25,9 +22,7 @@ onMounted(async () => {
     })
 
     if (response.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('userName')
-      router.push('/login')
+      handleUnauthorized(router)
       return
     }
 
@@ -63,9 +58,7 @@ async function savePreferences() {
     })
 
     if (response.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('userName')
-      router.push('/login')
+      handleUnauthorized(router)
       return
     }
 

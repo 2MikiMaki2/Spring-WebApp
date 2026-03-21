@@ -2,8 +2,9 @@
 import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { onBeforeRouteLeave } from 'vue-router'
-
+import { authHeaders, handleUnauthorized } from '../auth.js'
 import { BACKEND_URL } from '../config.js'
+
 const router = useRouter()
 
 const messages = ref([])
@@ -15,13 +16,6 @@ const messageListEl = ref(null)
 // so we don't save it twice (once on "New Chat" and again on navigate away).
 let conversationSaved = false
 
-function authHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
-  }
-}
-
 async function saveConversation() {
   // Only save if there are messages and we haven't saved already.
   if (messages.value.length === 0 || conversationSaved) return
@@ -29,7 +23,7 @@ async function saveConversation() {
   try {
     await fetch(`${BACKEND_URL}/api/conversations`, {
       method: 'POST',
-      headers: authHeaders(),
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
         mode: 'text',
         messages: messages.value,
@@ -66,14 +60,12 @@ async function sendMessage() {
   try {
     const response = await fetch(`${BACKEND_URL}/api/chat`, {
       method: 'POST',
-      headers: authHeaders(),
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: messages.value }),
     })
 
     if (response.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('userName')
-      router.push('/login')
+      handleUnauthorized(router)
       return
     }
 

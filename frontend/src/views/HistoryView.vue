@@ -1,16 +1,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-
+import { authHeaders, handleUnauthorized } from '../auth.js'
+import { formatDate } from '../utils.js'
 import { BACKEND_URL } from '../config.js'
+
 const router = useRouter()
 
 const conversations = ref([])
 const isLoading = ref(true)
-
-function authHeaders() {
-  return { Authorization: `Bearer ${localStorage.getItem('token')}` }
-}
 
 onMounted(async () => {
   try {
@@ -19,9 +17,7 @@ onMounted(async () => {
     })
 
     if (response.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('userName')
-      router.push('/login')
+      handleUnauthorized(router)
       return
     }
 
@@ -33,17 +29,6 @@ onMounted(async () => {
     isLoading.value = false
   }
 })
-
-function formatDate(isoString) {
-  const date = new Date(isoString)
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
 </script>
 
 <template>

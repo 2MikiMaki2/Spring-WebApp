@@ -2,8 +2,9 @@
 import { ref, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { onBeforeRouteLeave } from 'vue-router'
-
+import { authHeaders, handleUnauthorized } from '../auth.js'
 import { BACKEND_URL } from '../config.js'
+
 const router = useRouter()
 
 const status = ref('idle')
@@ -16,20 +17,13 @@ let audioElement = null
 let mediaStream = null
 let conversationSaved = false
 
-function authHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
-  }
-}
-
 async function saveConversation() {
   if (messages.value.length === 0 || conversationSaved) return
 
   try {
     await fetch(`${BACKEND_URL}/api/conversations`, {
       method: 'POST',
-      headers: authHeaders(),
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
         mode: 'voice',
         messages: messages.value,
@@ -51,18 +45,13 @@ async function startConversation() {
 
   try {
     // Step 1: Get an ephemeral token from our backend.
-    const token = localStorage.getItem('token')
     const tokenResponse = await fetch(`${BACKEND_URL}/api/token`, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: authHeaders(),
     })
 
     if (tokenResponse.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('userName')
-      router.push('/login')
+      handleUnauthorized(router)
       return
     }
 
