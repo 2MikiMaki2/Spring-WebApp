@@ -76,6 +76,12 @@ async function savePreferences() {
     isSaving.value = false
   }
 }
+
+function logout() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('userName')
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -118,6 +124,8 @@ async function savePreferences() {
       </button>
 
       <p v-if="saveMessage" class="save-message">{{ saveMessage }}</p>
+
+      <button @click="logout" class="mobile-logout-btn">Log out</button>
     </div>
   </main>
 </template>
@@ -196,5 +204,29 @@ h1 {
 .save-message {
   font-size: 0.9rem;
   color: #4a9c6d;
+}
+
+.mobile-logout-btn {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-logout-btn {
+    display: block;
+    margin-top: 1rem;
+    padding: 0.6rem 1.5rem;
+    font-size: 1rem;
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    color: #666;
+    cursor: pointer;
+    align-self: flex-start;
+  }
+
+  .mobile-logout-btn:hover {
+    border-color: #999;
+    color: #333;
+  }
 }
 </style>

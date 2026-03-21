@@ -274,4 +274,14 @@ h1 {
   font-size: 0.85rem;
   color: #999;
 }
+
+@media (max-width: 768px) {
+  .mode-links {
+    flex-direction: column;
+  }
+
+  .mode-card {
+    padding: 1.25rem 1.5rem;
+  }
+}
 </style>
