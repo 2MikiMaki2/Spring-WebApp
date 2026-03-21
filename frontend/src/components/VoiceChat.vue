@@ -347,6 +347,8 @@ onUnmounted(() => {
   padding: 0 2rem 2rem;
   max-width: 600px;
   margin: 0 auto;
+  border: 1px solid #ddd;
+  border-radius: 12px;
 }
 
 /* --- Top bar --- */
@@ -357,6 +359,7 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 0;
+  border-bottom: 1px solid #ddd;
 }
 
 .lang-badge {
