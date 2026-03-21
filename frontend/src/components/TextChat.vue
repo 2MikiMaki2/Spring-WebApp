@@ -116,7 +116,7 @@ async function scrollToBottom() {
 
     <div class="message-list" ref="messageListEl">
       <p v-if="messages.length === 0" class="empty-state">
-        Type a message to start practicing...
+        Say something to start the conversation...
       </p>
 
       <div

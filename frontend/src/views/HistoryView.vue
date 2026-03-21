@@ -38,7 +38,8 @@ onMounted(async () => {
     <div v-if="isLoading" class="loading">Loading conversations...</div>
 
     <div v-else-if="conversations.length === 0" class="empty-state">
-      No conversations yet. Start a voice or text session to see your history here.
+    <p>No conversations yet!</p>
+    <p>Start a <router-link to="/voice">voice</router-link> or <router-link to="/text">text</router-link> session — your conversations will appear here.</p>
     </div>
 
     <div v-else class="conversation-list">
@@ -135,5 +136,9 @@ h1 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.empty-state a {
+  color: #1D9E75;
 }
 </style>

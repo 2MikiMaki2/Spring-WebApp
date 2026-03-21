@@ -86,9 +86,10 @@ function formatRelativeDate(isoString) {
       </RouterLink>
     </div>
 
-    <div v-if="recentConversations.length > 0" class="recent-section">
+    <div class="recent-section">
       <p class="recent-heading">Recent conversations</p>
 
+      <template v-if="recentConversations.length > 0">
       <div class="recent-list">
         <RouterLink
           v-for="conv in recentConversations"
@@ -103,8 +104,9 @@ function formatRelativeDate(isoString) {
           <span class="recent-date">{{ formatRelativeDate(conv.created_at) }}</span>
         </RouterLink>
       </div>
-
       <RouterLink to="/history" class="view-all-link">View all history</RouterLink>
+      </template>
+      <p v-else class="empty-recent">Your recent conversations will show up here.</p>
     </div>
   </main>
 </template>
@@ -266,5 +268,10 @@ h1 {
 
 .view-all-link:hover {
   text-decoration: underline;
+}
+
+.empty-recent {
+  font-size: 0.85rem;
+  color: #999;
 }
 </style>
