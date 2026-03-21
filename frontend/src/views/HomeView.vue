@@ -7,8 +7,21 @@ import { authHeaders, handleUnauthorized } from '../auth.js'
 const router = useRouter()
 const userName = ref(localStorage.getItem('userName') || '')
 const recentConversations = ref([])
+const greeting = ref('Hello')
 
 onMounted(async () => {
+  try {
+    const prefsResponse = await fetch(`${BACKEND_URL}/api/preferences`, {
+      headers: authHeaders(),
+    })
+    if (prefsResponse.ok) {
+      const prefsData = await prefsResponse.json()
+      greeting.value = prefsData.preferences.greeting
+    }
+  } catch (err) {
+    console.error('Failed to load preferences:', err)
+  }
+
   try {
     const response = await fetch(`${BACKEND_URL}/api/conversations`, {
       headers: authHeaders(),
@@ -46,7 +59,7 @@ function formatRelativeDate(isoString) {
 
 <template>
   <main>
-    <h1>Bonjour, {{ userName }}</h1>
+    <h1>{{ greeting }}, {{ userName }}</h1>
     <p class="subtitle">Ready to practice? Pick a mode to get started.</p>
 
     <div class="mode-links">

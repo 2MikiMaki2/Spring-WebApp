@@ -25,10 +25,18 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 FRONTEND_URL = os.environ.get("FRONTEND_URL")
 
 #TODO: Hardcoded options for languages and voices. Is there ability to fetch from OpenAI in real time?
-SUPPORTED_LANGUAGES = [
-    "English", "French", "Serbian", "Spanish", "German", "Italian",
-    "Portuguese", "Japanese", "Korean", "Mandarin Chinese",
-]
+SUPPORTED_LANGUAGES = {
+    "English": "Hello",
+    "French": "Bonjour",
+    "Serbian": "Здраво",
+    "Spanish": "Hola",
+    "German": "Hallo",
+    "Italian": "Ciao",
+    "Portuguese": "Olá",
+    "Japanese": "こんにちは",
+    "Korean": "안녕하세요",
+    "Mandarin Chinese": "你好",
+}
 
 SUPPORTED_VOICES = [
     "alloy", "ash", "ballad", "coral", "echo",
@@ -260,11 +268,12 @@ async def get_preferences(user=Depends(get_current_user)):
             "target_language": prefs["target_language"],
             "voice": prefs["voice"],
             "custom_prompt": prefs["custom_prompt"],
+            "greeting": SUPPORTED_LANGUAGES.get(prefs["target_language"], "Hello"),
         },
         "options": {
-            "languages": SUPPORTED_LANGUAGES,
+            "languages": list(SUPPORTED_LANGUAGES.keys()),
             "voices": SUPPORTED_VOICES,
-        },
+        }
     }
 
 
@@ -311,6 +320,7 @@ async def update_preferences(
             "target_language": prefs["target_language"],
             "voice": prefs["voice"],
             "custom_prompt": prefs["custom_prompt"],
+            "greeting": SUPPORTED_LANGUAGES.get(prefs["target_language"], "Hello"),
         },
     }
 
