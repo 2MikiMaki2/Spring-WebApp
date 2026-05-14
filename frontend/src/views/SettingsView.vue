@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { authHeaders, handleUnauthorized } from '../auth.js'
 import { BACKEND_URL } from '../config.js'
+import { friendlyError } from '../errors.js'
 
 const router = useRouter()
 
@@ -14,6 +15,7 @@ const voices = ref([])
 const isLoading = ref(true)
 const isSaving = ref(false)
 const saveMessage = ref('')
+const loadError = ref('')
 
 onMounted(async () => {
   try {
@@ -34,6 +36,7 @@ onMounted(async () => {
     voices.value = data.options.voices
   } catch (err) {
     console.error('Failed to load preferences:', err)
+    loadError.value = friendlyError(err, 'Failed to load settings. Please refresh the page.')
   } finally {
     isLoading.value = false
   }
@@ -89,6 +92,8 @@ function logout() {
     <h1>Settings</h1>
 
     <div v-if="isLoading" class="loading">Loading preferences...</div>
+
+    <div v-else-if="loadError" class="error">{{ loadError }}</div>
 
     <div v-else class="settings-form">
       <div class="field">
@@ -228,5 +233,9 @@ h1 {
     border-color: #999;
     color: #333;
   }
+}
+
+.error {
+  color: #c44b4b;
 }
 </style>

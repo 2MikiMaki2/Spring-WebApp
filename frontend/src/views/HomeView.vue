@@ -3,11 +3,13 @@ import { ref, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { BACKEND_URL } from '../config.js'
 import { authHeaders, handleUnauthorized } from '../auth.js'
+import { friendlyError } from '../errors.js'
 
 const router = useRouter()
 const userName = ref(localStorage.getItem('userName') || '')
 const recentConversations = ref([])
 const greeting = ref('Hello')
+const loadError = ref('')
 
 onMounted(async () => {
   try {
@@ -37,6 +39,7 @@ onMounted(async () => {
     recentConversations.value = data.conversations.slice(0, 3)
   } catch (err) {
     console.error('Failed to load recent conversations:', err)
+    loadError.value = friendlyError(err, 'Could not load recent conversations.')
   }
 })
 
@@ -89,6 +92,7 @@ function formatRelativeDate(isoString) {
     <div class="recent-section">
       <p class="recent-heading">Recent conversations</p>
 
+      <p v-if="loadError" class="error">{{ loadError }}</p>
       <template v-if="recentConversations.length > 0">
       <div class="recent-list">
         <RouterLink
@@ -287,5 +291,10 @@ h1 {
   .mode-card {
     padding: 1.25rem 1.5rem;
   }
+}
+
+.error {
+  color: #c44b4b;
+  font-size: 0.85rem;
 }
 </style>

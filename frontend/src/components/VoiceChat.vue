@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { onBeforeRouteLeave } from 'vue-router'
 import { BACKEND_URL } from '../config.js'
 import { authHeaders, handleUnauthorized } from '../auth.js'
+import { friendlyError } from '../errors.js'
 
 const router = useRouter()
 
@@ -23,6 +24,8 @@ let mediaStream = null
 let conversationSaved = false
 let timerInterval = null
 let assistantMsgIndex = -1
+let connectionTimeout = null
+let silenceTimeout = null
 
 // --- Preferences ---
 
@@ -75,6 +78,42 @@ async function scrollTranscript() {
   }
 }
 
+// --- Connection health ---
+
+function startConnectionTimeout() {
+  connectionTimeout = setTimeout(() => {
+    if (status.value === 'connecting') {
+      errorMessage.value = 'Connection timed out. Please check your internet and try again.'
+      status.value = 'error'
+      stopConversation()
+    }
+  }, 15000)
+}
+
+function clearConnectionTimeout() {
+  if (connectionTimeout) {
+    clearTimeout(connectionTimeout)
+    connectionTimeout = null
+  }
+}
+
+function startSilenceTimeout() {
+  silenceTimeout = setTimeout(() => {
+    if (status.value === 'connected') {
+      errorMessage.value = 'No response from AI — try reconnecting.'
+      status.value = 'error'
+      stopConversation()
+    }
+  }, 15000)
+}
+
+function clearSilenceTimeout() {
+  if (silenceTimeout) {
+    clearTimeout(silenceTimeout)
+    silenceTimeout = null
+  }
+}
+
 // --- Save ---
 
 async function saveConversation() {
@@ -95,6 +134,8 @@ async function saveConversation() {
     conversationSaved = true
   } catch (err) {
     console.error('Failed to save conversation:', err)
+    errorMessage.value = friendlyError(err, 'Your conversation could not be saved.')
+    status.value = 'error'
   }
 }
 
@@ -108,6 +149,8 @@ async function startConversation() {
   assistantMsgIndex = -1
 
   try {
+    startConnectionTimeout()
+
     const tokenResponse = await fetch(`${BACKEND_URL}/api/token`, {
       method: 'POST',
       headers: authHeaders(),
@@ -140,13 +183,25 @@ async function startConversation() {
     dataChannel = pc.createDataChannel('oai-events')
 
     dataChannel.onopen = () => {
+      clearConnectionTimeout()
       status.value = 'connected'
       startTimer()
+      startSilenceTimeout()
     }
 
     dataChannel.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data)
+        clearSilenceTimeout()
+
+        // OpenAI error event — surface to user.
+        if (msg.type === 'error') {
+          console.error('OpenAI error:', msg)
+          errorMessage.value = msg.error?.message || 'An error occurred during the conversation.'
+          status.value = 'error'
+          stopConversation()
+          return
+        }
 
         // User transcript — appears as a complete block.
         if (
@@ -221,6 +276,8 @@ async function startConversation() {
 
 async function stopConversation() {
   stopTimer()
+  clearConnectionTimeout()
+  clearSilenceTimeout()
   await saveConversation()
 
   if (dataChannel) {

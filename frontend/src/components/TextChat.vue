@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { onBeforeRouteLeave } from 'vue-router'
 import { authHeaders, handleUnauthorized } from '../auth.js'
 import { BACKEND_URL } from '../config.js'
+import { friendlyError } from '../errors.js'
 
 const router = useRouter()
 
@@ -13,6 +14,7 @@ const isLoading = ref(false)
 const messageListEl = ref(null)
 const language = ref('')
 const userInitial = ref('')
+const saveError = ref('')
 
 let conversationSaved = false
 
@@ -56,6 +58,7 @@ async function saveConversation() {
     conversationSaved = true
   } catch (err) {
     console.error('Failed to save conversation:', err)
+    saveError.value = friendlyError(err, 'Your conversation could not be saved.')
   }
 }
 
@@ -63,6 +66,7 @@ async function newChat() {
   await saveConversation()
   messages.value = []
   conversationSaved = false
+  saveError.value = ''
 }
 
 onBeforeRouteLeave(async () => {
@@ -138,6 +142,9 @@ async function scrollToBottom() {
         New chat
       </button>
     </div>
+
+    <!-- Save warning -->
+    <p v-if="saveError" class="save-error">{{ saveError }}</p>
 
     <!-- Messages -->
     <div class="message-list" ref="messageListEl">
@@ -416,5 +423,13 @@ async function scrollToBottom() {
     height: calc(100vh - 120px);
     max-width: 100%;
   }
+}
+
+.save-error {
+  color: #c44b4b;
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 0.4rem;
+  margin: 0;
 }
 </style>
