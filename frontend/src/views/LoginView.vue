@@ -116,4 +116,10 @@ h1 {
   color: #c44b4b;
   margin-top: 1rem;
 }
+
+@media (max-width: 768px) {
+  main {
+    padding: 2rem 1rem;
+  }
+}
 </style>

@@ -551,7 +551,7 @@ button {
   }
 
   .transcript-scroll {
-    max-height: 250px;
+    max-height: 200px;
   }
 }
 

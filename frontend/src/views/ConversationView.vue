@@ -231,4 +231,18 @@ main {
   color: #333;
   line-height: 1.5;
 }
+
+@media (max-width: 768px) {
+  main {
+    padding: 1rem;
+  }
+
+  .conversation-header {
+    max-width: 100%;
+  }
+
+  .message-list {
+    max-width: 100%;
+  }
+}
 </style>

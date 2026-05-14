@@ -19,4 +19,10 @@ main {
 h1 {
   margin-bottom: 1rem;
 }
+
+@media (max-width: 768px) {
+  main {
+    padding: 0.5rem 1rem;
+  }
+}
 </style>

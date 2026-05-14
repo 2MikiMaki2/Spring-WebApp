@@ -141,4 +141,10 @@ h1 {
 .empty-state a {
   color: #1D9E75;
 }
+
+@media (max-width: 768px) {
+  main {
+    padding: 1rem;
+  }
+}
 </style>

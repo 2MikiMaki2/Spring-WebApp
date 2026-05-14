@@ -276,6 +276,10 @@ h1 {
 }
 
 @media (max-width: 768px) {
+  main {
+    padding: 1.5rem 1rem 1rem;
+  }
+  
   .mode-links {
     flex-direction: column;
   }

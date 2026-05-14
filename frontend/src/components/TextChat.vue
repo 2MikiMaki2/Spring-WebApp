@@ -413,7 +413,8 @@ async function scrollToBottom() {
 
 @media (max-width: 768px) {
   .text-chat {
-    height: calc(100vh - 160px);
+    height: calc(100vh - 120px);
+    max-width: 100%;
   }
 }
 </style>
