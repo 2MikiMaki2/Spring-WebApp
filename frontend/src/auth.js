@@ -7,6 +7,7 @@ export function authHeaders() {
 export function handleUnauthorized(router) {
   localStorage.removeItem('token')
   localStorage.removeItem('userName')
+  localStorage.removeItem('isGuest')
   router.push('/login')
 }
 

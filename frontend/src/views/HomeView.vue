@@ -10,6 +10,7 @@ const userName = ref(localStorage.getItem('userName') || '')
 const recentConversations = ref([])
 const greeting = ref('Hello')
 const loadError = ref('')
+const isGuest = localStorage.getItem('isGuest') === 'true'
 
 onMounted(async () => {
   try {
@@ -24,22 +25,24 @@ onMounted(async () => {
     console.error('Failed to load preferences:', err)
   }
 
-  try {
-    const response = await fetch(`${BACKEND_URL}/api/conversations`, {
-      headers: authHeaders(),
-    })
+  if (!isGuest) {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/conversations`, {
+        headers: authHeaders(),
+      })
 
-    if (response.status === 401) {
-      handleUnauthorized(router)
-      return
+      if (response.status === 401) {
+        handleUnauthorized(router)
+        return
+      }
+
+      const data = await response.json()
+      // Show only the 3 most recent.
+      recentConversations.value = data.conversations.slice(0, 3)
+    } catch (err) {
+      console.error('Failed to load recent conversations:', err)
+      loadError.value = friendlyError(err, 'Could not load recent conversations.')
     }
-
-    const data = await response.json()
-    // Show only the 3 most recent.
-    recentConversations.value = data.conversations.slice(0, 3)
-  } catch (err) {
-    console.error('Failed to load recent conversations:', err)
-    loadError.value = friendlyError(err, 'Could not load recent conversations.')
   }
 })
 
@@ -89,7 +92,7 @@ function formatRelativeDate(isoString) {
       </RouterLink>
     </div>
 
-    <div class="recent-section">
+    <div v-if="!isGuest" class="recent-section">
       <p class="recent-heading">Recent conversations</p>
 
       <p v-if="loadError" class="error">{{ loadError }}</p>

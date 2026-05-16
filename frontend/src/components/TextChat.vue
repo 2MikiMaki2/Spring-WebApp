@@ -44,6 +44,7 @@ onMounted(async () => {
 // --- Save ---
 
 async function saveConversation() {
+  if (localStorage.getItem('isGuest') === 'true') return
   if (messages.value.length === 0 || conversationSaved) return
 
   try {

@@ -83,6 +83,7 @@ async function savePreferences() {
 function logout() {
   localStorage.removeItem('token')
   localStorage.removeItem('userName')
+  localStorage.removeItem('isGuest')
   router.push('/login')
 }
 </script>

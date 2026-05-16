@@ -6,18 +6,21 @@ const router = useRouter()
 const route = useRoute()
 const userName = ref(localStorage.getItem('userName') || '')
 const isLoggedIn = ref(!!localStorage.getItem('token'))
+const isGuest = ref(localStorage.getItem('isGuest') === 'true')
 
 watch(
   () => route.path,
   () => {
     userName.value = localStorage.getItem('userName') || ''
     isLoggedIn.value = !!localStorage.getItem('token')
+    isGuest.value = localStorage.getItem('isGuest') === 'true'
   },
 )
 
 function logout() {
   localStorage.removeItem('token')
   localStorage.removeItem('userName')
+  localStorage.removeItem('isGuest')
   isLoggedIn.value = false
   userName.value = ''
   router.push('/login')
@@ -37,7 +40,7 @@ function isActive(path) {
         <RouterLink to="/" class="brand-link">frenchat</RouterLink>
         <RouterLink to="/voice">Voice</RouterLink>
         <RouterLink to="/text">Text</RouterLink>
-        <RouterLink to="/history">History</RouterLink>
+        <RouterLink v-if="!isGuest" to="/history">History</RouterLink>
         <RouterLink to="/settings">Settings</RouterLink>
       </div>
       <div class="nav-user">
@@ -74,7 +77,7 @@ function isActive(path) {
       </svg>
       <span>Text</span>
     </RouterLink>
-    <RouterLink to="/history" class="tab" :class="{ active: isActive('/history') }">
+    <RouterLink v-if="!isGuest" to="/history" class="tab" :class="{ active: isActive('/history') }">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
         <polyline points="14 2 14 8 20 8"/>

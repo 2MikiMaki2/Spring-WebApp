@@ -1,11 +1,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-
 import { BACKEND_URL } from '../config.js'
+import { friendlyError } from '../errors.js'
+
 const router = useRouter()
 const isLoading = ref(true)
 const errorMessage = ref('')
+const isGuestLoading = ref(false)
 
 // The Google script loads asynchronously, so it might not be ready
 // when this component mounts. This function polls until it's available.
@@ -78,6 +80,31 @@ async function handleGoogleResponse(response) {
     errorMessage.value = 'Sign-in failed. Please try again.'
   }
 }
+
+async function loginAsGuest() {
+  isGuestLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    const result = await fetch(`${BACKEND_URL}/api/auth/guest`, {
+      method: 'POST',
+    })
+
+    if (!result.ok) {
+      throw new Error('Failed to create guest session')
+    }
+
+    const data = await result.json()
+    localStorage.setItem('token', data.token)
+    localStorage.setItem('userName', data.user.name)
+    localStorage.setItem('isGuest', 'true')
+    router.push('/')
+  } catch (err) {
+    console.error('Guest auth error:', err)
+    errorMessage.value = friendlyError(err, 'Could not start guest session. Please try again.')
+    isGuestLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -87,6 +114,20 @@ async function handleGoogleResponse(response) {
 
     <div v-show="isLoading" class="loading">Loading...</div>
     <div v-show="!isLoading" id="google-signin-btn"></div>
+
+    <div v-show="!isLoading" class="divider">
+      <span>or</span>
+    </div>
+
+    <button
+      v-show="!isLoading"
+      @click="loginAsGuest"
+      :disabled="isGuestLoading"
+      class="guest-btn"
+    >
+      {{ isGuestLoading ? 'Starting...' : 'Try as Guest' }}
+    </button>
+
     <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
   </main>
 </template>
@@ -121,5 +162,46 @@ h1 {
   main {
     padding: 2rem 1rem;
   }
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 230px;
+  margin: 1rem 0;
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #ddd;
+}
+
+.divider span {
+  padding: 0 0.75rem;
+}
+
+.guest-btn {
+  padding: 0.6rem 1.5rem;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: none;
+  color: #666;
+  cursor: pointer;
+}
+
+.guest-btn:hover:not(:disabled) {
+  border-color: #999;
+  color: #333;
+}
+
+.guest-btn:disabled {
+  color: #aaa;
+  cursor: not-allowed;
 }
 </style>

@@ -47,6 +47,11 @@ router.beforeEach((to) => {
   if (!token && to.name !== 'login') {
     return { name: 'login' }
   }
+
+  const isGuest = localStorage.getItem('isGuest') === 'true'
+  if (isGuest && (to.name === 'history' || to.name === 'conversation')) {
+    return { name: 'home' }
+  }
 })
 
 export default router

@@ -56,9 +56,10 @@ async def init_db():
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
-                google_id TEXT UNIQUE NOT NULL,
+                google_id TEXT UNIQUE,
                 email TEXT NOT NULL,
                 name TEXT NOT NULL,
+                is_guest BOOLEAN NOT NULL DEFAULT FALSE,
                 created_at TIMESTAMPTZ DEFAULT NOW()
             )
         """)
@@ -89,6 +90,17 @@ async def init_db():
                 content TEXT NOT NULL,
                 created_at TIMESTAMPTZ DEFAULT NOW()
             )
+        """)
+
+        # --- Migrations ---
+        # Add guest user support.
+        await conn.execute("""
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS is_guest BOOLEAN NOT NULL DEFAULT FALSE
+        """)
+        await conn.execute("""
+            ALTER TABLE users
+            ALTER COLUMN google_id DROP NOT NULL
         """)
 
 
@@ -162,15 +174,62 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={"detail": "An internal error occurred. Please try again later."},
     )
 
+# --- Rate limiting ---
+
+from collections import defaultdict
+import time
+
+class RateLimiter:
+    def __init__(self):
+        # Structure: { user_id: { endpoint: [timestamp, timestamp, ...] } }
+        self.requests = defaultdict(lambda: defaultdict(list))
+
+    def check(self, user_id: int, endpoint: str, limit: int, window: int = 86400):
+        """
+        Check if a request is allowed.
+        - limit: max requests per window
+        - window: time window in seconds (default 86400 = 24 hours)
+        Raises HTTPException if limit exceeded.
+        """
+        now = time.time()
+        timestamps = self.requests[user_id][endpoint]
+
+        # Remove timestamps outside the window.
+        self.requests[user_id][endpoint] = [
+            t for t in timestamps if now - t < window
+        ]
+
+        if len(self.requests[user_id][endpoint]) >= limit:
+            raise HTTPException(
+                status_code=429,
+                detail="Rate limit exceeded. Please try again later.",
+            )
+
+        self.requests[user_id][endpoint].append(now)
+
+rate_limiter = RateLimiter()
+
+# Limits: (authenticated, guest)
+RATE_LIMITS = {
+    "token": (10, 2),
+    "chat": (30, 10),
+}
+
+def check_rate_limit(user, endpoint: str):
+    is_guest = user.get("is_guest", False) # May fail for Record objects
+    auth_limit, guest_limit = RATE_LIMITS[endpoint]
+    limit = guest_limit if is_guest else auth_limit
+    rate_limiter.check(user["id"], endpoint, limit)
+
 # --- Auth helpers ---
 
 security = HTTPBearer()
 
 
-def create_jwt(user_id: int) -> str:
+def create_jwt(user_id: int, expires_in: timedelta = timedelta(days=7)) -> str:
     payload = {
         "sub": str(user_id),
-        "exp": datetime.now(timezone.utc) + timedelta(days=7),
+        "exp": datetime.now(timezone.utc) + expires_in,
     }
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
@@ -192,6 +251,14 @@ async def get_current_user(
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
 
+    return user
+
+async def require_full_user(user=Depends(get_current_user)):
+    if user.get("is_guest", False):
+        raise HTTPException(
+            status_code=403,
+            detail="This feature requires a full account. Please sign in with Google.",
+        )
     return user
 
 
@@ -249,6 +316,33 @@ async def auth_google(request: GoogleAuthRequest):
     name = id_info.get("name", "")
 
     async with db_pool.acquire() as conn:
+        # Lazy cleanup: delete guest users older than 24 hours.
+        # Clean up expired guest data.
+        expired_ids = [
+            row["id"] for row in await conn.fetch(
+                "SELECT id FROM users WHERE is_guest = TRUE "
+                "AND created_at < NOW() - INTERVAL '24 hours'"
+            )
+        ]
+        if expired_ids:
+            await conn.execute(
+                "DELETE FROM messages WHERE conversation_id IN "
+                "(SELECT id FROM conversations WHERE user_id = ANY($1::int[]))",
+                expired_ids,
+            )
+            await conn.execute(
+                "DELETE FROM conversations WHERE user_id = ANY($1::int[])",
+                expired_ids,
+            )
+            await conn.execute(
+                "DELETE FROM preferences WHERE user_id = ANY($1::int[])",
+                expired_ids,
+            )
+            await conn.execute(
+                "DELETE FROM users WHERE id = ANY($1::int[])",
+                expired_ids,
+            )
+
         user = await conn.fetchrow(
             "SELECT * FROM users WHERE google_id = $1", google_id
         )
@@ -274,6 +368,57 @@ async def auth_google(request: GoogleAuthRequest):
         },
     }
 
+@app.post("/api/auth/guest")
+async def auth_guest():
+    """Create a temporary guest user and return a JWT."""
+
+    # Lazy cleanup: delete guest users older than 24 hours.
+    async with db_pool.acquire() as conn:
+        # Clean up expired guest data.
+        expired_ids = [
+            row["id"] for row in await conn.fetch(
+                "SELECT id FROM users WHERE is_guest = TRUE "
+                "AND created_at < NOW() - INTERVAL '24 hours'"
+            )
+        ]
+        if expired_ids:
+            await conn.execute(
+                "DELETE FROM messages WHERE conversation_id IN "
+                "(SELECT id FROM conversations WHERE user_id = ANY($1::int[]))",
+                expired_ids,
+            )
+            await conn.execute(
+                "DELETE FROM conversations WHERE user_id = ANY($1::int[])",
+                expired_ids,
+            )
+            await conn.execute(
+                "DELETE FROM preferences WHERE user_id = ANY($1::int[])",
+                expired_ids,
+            )
+            await conn.execute(
+                "DELETE FROM users WHERE id = ANY($1::int[])",
+                expired_ids,
+            )
+
+        user = await conn.fetchrow(
+            "INSERT INTO users (google_id, email, name, is_guest) "
+            "VALUES (NULL, '', 'Guest', TRUE) RETURNING *"
+        )
+
+        await conn.execute(
+            "INSERT INTO preferences (user_id) VALUES ($1)",
+            user["id"],
+        )
+
+    token = create_jwt(user["id"], expires_in=timedelta(hours=24))
+    return {
+        "token": token,
+        "user": {
+            "id": user["id"],
+            "email": "",
+            "name": "Guest",
+        },
+    }
 
 # --- Preferences ---
 
@@ -346,7 +491,7 @@ async def update_preferences(
 
 @app.post("/api/conversations")
 async def save_conversation(
-    request: SaveConversationRequest, user=Depends(get_current_user)
+    request: SaveConversationRequest, user=Depends(require_full_user)
 ):
     """Save a completed conversation (text or voice) with all its messages."""
 
@@ -372,7 +517,7 @@ async def save_conversation(
 
 
 @app.get("/api/conversations")
-async def list_conversations(user=Depends(get_current_user)):
+async def list_conversations(user=Depends(require_full_user)):
     """List all conversations for the current user, newest first."""
 
     async with db_pool.acquire() as conn:
@@ -401,7 +546,7 @@ async def list_conversations(user=Depends(get_current_user)):
 
 
 @app.get("/api/conversations/{conversation_id}")
-async def get_conversation(conversation_id: int, user=Depends(get_current_user)):
+async def get_conversation(conversation_id: int, user=Depends(require_full_user)):
     """Get the full transcript of a single conversation."""
 
     async with db_pool.acquire() as conn:
@@ -437,7 +582,7 @@ async def get_conversation(conversation_id: int, user=Depends(get_current_user))
     }
 
 @app.delete("/api/conversations/{conversation_id}")
-async def delete_conversation(conversation_id: int, user=Depends(get_current_user)):
+async def delete_conversation(conversation_id: int, user=Depends(require_full_user)):
     """Delete a conversation and all its messages."""
 
     async with db_pool.acquire() as conn:
@@ -464,6 +609,8 @@ async def delete_conversation(conversation_id: int, user=Depends(get_current_use
 
 @app.post("/api/token")
 async def create_realtime_token(user=Depends(get_current_user)):
+    check_rate_limit(user, "token")
+    
     if not OPENAI_API_KEY:
         raise HTTPException(status_code=500, detail="OpenAI API key not configured")
 
@@ -507,6 +654,8 @@ async def create_realtime_token(user=Depends(get_current_user)):
 
 @app.post("/api/chat")
 async def chat(request: ChatRequest, user=Depends(get_current_user)):
+    check_rate_limit(user, "chat")
+    
     if not OPENAI_API_KEY:
         raise HTTPException(status_code=500, detail="OpenAI API key not configured")
 
