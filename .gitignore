@@ -12,3 +12,6 @@ __pycache__/
 deployment-steps.txt
 
 backend/.env
+
+# MISC
+frenchat Home.html
