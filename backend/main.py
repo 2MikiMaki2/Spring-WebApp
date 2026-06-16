@@ -50,7 +50,13 @@ db_pool = None
 
 async def init_db():
     global db_pool
-    db_pool = await asyncpg.create_pool(DATABASE_URL)
+    try:
+        db_pool = await asyncpg.create_pool(DATABASE_URL)
+    except (OSError, asyncpg.PostgresError) as exc:
+        raise RuntimeError(
+            f"Could not connect to PostgreSQL at DATABASE_URL: {exc}. "
+            "Is the database running? See deployment-steps.txt."
+        ) from exc
 
     async with db_pool.acquire() as conn:
         await conn.execute("""
@@ -143,6 +149,18 @@ async def get_user_preferences(user_id: int):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    missing = [
+        name for name, value in (
+            ("DATABASE_URL", DATABASE_URL),
+            ("JWT_SECRET", JWT_SECRET),
+            ("FRONTEND_URL", FRONTEND_URL),
+        ) if not value
+    ]
+    if missing:
+        raise RuntimeError(
+            f"Missing required environment variables: {', '.join(missing)}. "
+            "Create backend/.env — see deployment-steps.txt for the expected contents."
+        )
     await init_db()
     yield
     await close_db()
@@ -627,12 +645,17 @@ async def create_realtime_token(user=Depends(get_current_user)):
             json={
                 "session": {
                     "type": "realtime",
-                    "model": "gpt-realtime",
+                    "model": "gpt-realtime-2",
                     "instructions": prompt,
+                    # Low effort keeps latency conversational; raise if
+                    # corrections need more depth.
+                    "reasoning": {
+                        "effort": "low",
+                    },
                     "audio": {
                         "input": {
                             "transcription": {
-                                "model": "whisper-1",
+                                "model": "gpt-realtime-whisper",
                             },
                         },
                         "output": {
