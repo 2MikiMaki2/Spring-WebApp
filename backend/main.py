@@ -657,6 +657,21 @@ async def create_realtime_token(user=Depends(get_current_user)):
                             "transcription": {
                                 "model": "gpt-realtime-whisper",
                             },
+                            # Filter background noise before it reaches VAD.
+                            # near_field suits headphones/close mics; helps
+                            # stop the model from hearing itself and barging in.
+                            "noise_reduction": {
+                                "type": "near_field",
+                            },
+                            # Semantic VAD decides turns from what was said,
+                            # not raw loudness — far less likely to cut the
+                            # model off on stray sounds. Low eagerness gives
+                            # the user more time before a turn ends.
+                            "turn_detection": {
+                                "type": "semantic_vad",
+                                "eagerness": "low",
+                                "interrupt_response": True,
+                            },
                         },
                         "output": {
                             "voice": prefs["voice"],
