@@ -145,12 +145,12 @@ async function scrollToBottom() {
     </div>
 
     <!-- Save warning -->
-    <p v-if="saveError" class="save-error">{{ saveError }}</p>
+    <p v-if="saveError" class="fc-error save-error">{{ saveError }}</p>
 
     <!-- Messages -->
     <div class="message-list" ref="messageListEl">
       <div v-if="messages.length === 0" class="empty-state">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.2" stroke-linecap="round">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
         <p>Say something!</p>
@@ -229,31 +229,33 @@ async function scrollToBottom() {
 
 .lang-badge {
   font-size: 0.8rem;
-  font-weight: bold;
-  background-color: #e6f1fb;
-  color: #185FA5;
-  padding: 0.2rem 0.65rem;
-  border-radius: 12px;
+  font-weight: 700;
+  background-color: var(--accent-tint);
+  color: var(--accent-deep);
+  padding: 0.2rem 0.7rem;
+  border-radius: var(--radius-pill);
 }
 
 .new-chat-btn {
-  padding: 0.2rem 0.6rem;
+  padding: 0.3rem 0.8rem;
   font-size: 0.8rem;
+  font-weight: 500;
   background: none;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  color: #666;
+  border: 1.5px solid var(--border-control);
+  border-radius: var(--radius-pill);
+  color: var(--text-body);
   cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
 }
 
 .new-chat-btn:hover:not(:disabled) {
-  border-color: #999;
-  color: #333;
+  border-color: var(--accent);
+  color: var(--accent-deep);
 }
 
 .new-chat-btn:disabled {
-  color: #ccc;
-  border-color: #eee;
+  color: var(--text-faint);
+  border-color: var(--border-soft);
   cursor: not-allowed;
 }
 
@@ -263,9 +265,9 @@ async function scrollToBottom() {
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 12px 12px 0 0;
-  background: #1a1a1a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+  background: var(--surface-raised);
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -278,11 +280,12 @@ async function scrollToBottom() {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  color: var(--border-control);
 }
 
 .empty-state p {
   font-size: 0.85rem;
-  color: #bbb;
+  color: var(--text-muted);
   text-align: center;
 }
 
@@ -309,31 +312,31 @@ async function scrollToBottom() {
 }
 
 .avatar-user {
-  background-color: #e1f5ee;
-  color: #0F6E56;
+  background-color: var(--brand-tint);
+  color: var(--brand-deep);
 }
 
 .avatar-ai {
-  background-color: #e6f1fb;
-  color: #185FA5;
+  background-color: var(--accent-tint);
+  color: var(--accent-deep);
 }
 
 .bubble {
-  padding: 0.5rem 0.75rem;
-  border-radius: 12px;
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius-control);
   font-size: 0.9rem;
   line-height: 1.5;
   max-width: 75%;
-  color: #333;
+  color: var(--text-strong);
 }
 
 .bubble-user {
-  background-color: #e1f5ee;
+  background-color: var(--brand-tint);
   border-bottom-right-radius: 4px;
 }
 
 .bubble-ai {
-  background-color: #f0f0f0;
+  background-color: var(--accent-tint);
   border-bottom-left-radius: 4px;
 }
 
@@ -353,7 +356,7 @@ async function scrollToBottom() {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #888;
+  background-color: var(--accent);
 }
 
 .dot1 { animation: bounce 1.2s ease-in-out infinite; }
@@ -372,50 +375,51 @@ async function scrollToBottom() {
   gap: 0.5rem;
   align-items: flex-end;
   padding: 0.65rem;
-  border: 1px solid #ddd;
-  border-top: none;
-  border-radius: 0 0 12px 12px;
-  background: #1a1a1a;
+  border: 1px solid var(--border);
+  border-top: 1px solid var(--border-soft);
+  border-radius: 0 0 var(--radius-panel) var(--radius-panel);
+  background: var(--surface-hover);
 }
 
 .input-area textarea {
   flex: 1;
   resize: none;
-  padding: 0.5rem 0.75rem;
+  padding: 0.55rem 0.8rem;
   font-size: 0.9rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-control);
   font-family: inherit;
   line-height: 1.4;
-  background: #fff;
-  color: #333;
+  background: var(--surface-raised);
+  color: var(--text-strong);
 }
 
 .input-area textarea:focus {
   outline: none;
-  border-color: #1D9E75;
+  border-color: var(--accent);
 }
 
 .send-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-control);
   border: none;
-  background-color: #1D9E75;
+  background-color: var(--brand);
   color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: background-color 0.15s ease;
 }
 
 .send-btn:hover:not(:disabled) {
-  background-color: #0F6E56;
+  background-color: var(--brand-deep);
 }
 
 .send-btn:disabled {
-  background-color: #ccc;
+  background-color: var(--border-control);
   cursor: not-allowed;
 }
 
@@ -427,7 +431,6 @@ async function scrollToBottom() {
 }
 
 .save-error {
-  color: #c44b4b;
   font-size: 0.8rem;
   text-align: center;
   padding: 0.4rem;

@@ -1,53 +1,59 @@
-/* color palette from <https://github.com/vuejs/theme> */
+/* ==========================================================================
+   frenchat design system — see frontend/DESIGN.md
+   Warm cream surface · coral brand (voice) · teal secondary (text) · soft red.
+   All color/type/shape lives here as tokens. Components reference the tokens,
+   never raw hex.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap');
+
 :root {
-  --vt-c-white: #ffffff;
-  --vt-c-white-soft: #f8f8f8;
-  --vt-c-white-mute: #f2f2f2;
+  /* brand — coral (voice / primary) */
+  --brand: #EE8A5F;
+  --brand-deep: #D9774C;
+  --brand-tint: #FCEAE0;
+  --brand-tint-2: #F6D9C6;
+  --brand-pulse: rgba(238, 138, 95, 0.30);
+  --brand-pulse-0: rgba(238, 138, 95, 0);
+  --brand-shadow: rgba(238, 138, 95, 0.18);
 
-  --vt-c-black: #181818;
-  --vt-c-black-soft: #222222;
-  --vt-c-black-mute: #282828;
+  /* secondary — teal (text) */
+  --accent: #3FA095;
+  --accent-deep: #2F8579;
+  --accent-tint: #E5F3F0;
+  --accent-tint-2: #C8E6E1;
 
-  --vt-c-indigo: #2c3e50;
+  /* danger — soft red */
+  --danger: #E5705E;
+  --danger-deep: #C7553F;
 
-  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
-  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
-  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
+  /* warm neutrals */
+  --surface-page: #FBF6EF;
+  --surface-raised: #FFFFFF;
+  --surface-hover: #FCF7F0;
+  --border: #F0E6D7;
+  --border-soft: #F4ECDF;
+  --border-control: #E4D8C7;
+  --text-strong: #2E2A26;
+  --text-body: #5C544B;
+  --text-muted: #9A8F80;
+  --text-faint: #A6967F;
 
-  --vt-c-text-light-1: var(--vt-c-indigo);
-  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
-  --vt-c-text-dark-1: var(--vt-c-white);
-  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
-}
+  /* type */
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-ui: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, sans-serif;
 
-/* semantic color variables for this project */
-:root {
-  --color-background: var(--vt-c-white);
-  --color-background-soft: var(--vt-c-white-soft);
-  --color-background-mute: var(--vt-c-white-mute);
+  /* shape */
+  --radius-card: 26px;
+  --radius-panel: 20px;
+  --radius-control: 12px;
+  --radius-pill: 999px;
+  --shadow-rest: 0 6px 22px rgba(120, 90, 55, 0.06);
+  --shadow-hover: 0 16px 38px rgba(120, 90, 55, 0.13);
 
-  --color-border: var(--vt-c-divider-light-2);
-  --color-border-hover: var(--vt-c-divider-light-1);
-
-  --color-heading: var(--vt-c-text-light-1);
-  --color-text: var(--vt-c-text-light-1);
-
-  --section-gap: 160px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: var(--vt-c-black);
-    --color-background-soft: var(--vt-c-black-soft);
-    --color-background-mute: var(--vt-c-black-mute);
-
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
-
-    --color-heading: var(--vt-c-text-dark-1);
-    --color-text: var(--vt-c-text-dark-2);
-  }
+  /* page background — warm radial glow */
+  --page-glow: radial-gradient(120% 90% at 50% -10%, #FFF6EC, #FBF6EF 46%, #F7F0E6);
 }
 
 *,
@@ -60,27 +66,55 @@
 
 body {
   min-height: 100vh;
-  color: var(--color-text);
-  background: var(--color-background);
-  transition:
-    color 0.5s,
-    background-color 0.5s;
+  color: var(--text-body);
+  background: var(--page-glow);
+  background-attachment: fixed;
   line-height: 1.6;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    'Fira Sans',
-    'Droid Sans',
-    'Helvetica Neue',
-    sans-serif;
+  font-family: var(--font-ui);
   font-size: 15px;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   Shared component classes — centralized so the recurring UI bits
+   (badges, error text, section labels) are defined once.
+   ========================================================================== */
+
+/* Mode badges (voice = coral, text = teal). Used in Home, History,
+   Conversation. The `.voice` / `.text` modifiers match conv.mode. */
+.fc-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.18rem 0.55rem;
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
+}
+
+.fc-badge.voice {
+  background-color: var(--brand-tint);
+  color: var(--brand-deep);
+}
+
+.fc-badge.text {
+  background-color: var(--accent-tint);
+  color: var(--accent-deep);
+}
+
+/* Inline error / save-warning text. */
+.fc-error {
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+
+/* Uppercase section label. */
+.fc-section-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
 }

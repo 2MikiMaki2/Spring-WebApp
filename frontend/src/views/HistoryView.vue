@@ -50,7 +50,7 @@ onMounted(async () => {
         class="conversation-card"
       >
         <div class="card-header">
-          <span class="mode-badge" :class="conv.mode">{{ conv.mode }}</span>
+          <span class="fc-badge" :class="conv.mode">{{ conv.mode }}</span>
           <span class="date">{{ formatDate(conv.created_at) }}</span>
         </div>
         <p class="preview">{{ conv.preview || 'No preview available' }}</p>
@@ -64,16 +64,20 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem) 0;
 }
 
 h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2rem, 4.5vw, 2.6rem);
+  color: var(--text-strong);
   margin-bottom: 1.5rem;
 }
 
 .loading,
 .empty-state {
-  color: #888;
+  color: var(--text-muted);
 }
 
 .conversation-list {
@@ -81,22 +85,24 @@ h1 {
   max-width: 600px;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.85rem;
 }
 
 .conversation-card {
   display: block;
-  padding: 1rem 1.25rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  padding: 1.1rem 1.3rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-rest);
   text-decoration: none;
   color: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .conversation-card:hover {
-  border-color: #4a9c6d;
-  box-shadow: 0 2px 8px rgba(74, 156, 109, 0.15);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-hover);
 }
 
 .card-header {
@@ -106,45 +112,17 @@ h1 {
   margin-bottom: 0.5rem;
 }
 
-.mode-badge {
-  font-size: 0.75rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-}
-
-.mode-badge.voice {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-}
-
-.mode-badge.text {
-  background-color: #e3f2fd;
-  color: #1565c0;
-}
-
 .date {
-  font-size: 0.8rem;
-  color: #999;
+  font-size: 0.86rem;
+  color: var(--text-faint);
 }
 
 .preview {
-  font-size: 0.9rem;
-  color: #555;
+  font-size: 0.92rem;
+  color: var(--text-body);
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.empty-state a {
-  color: #1D9E75;
-}
-
-@media (max-width: 768px) {
-  main {
-    padding: 1rem;
-  }
 }
 </style>

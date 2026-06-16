@@ -402,11 +402,14 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 2rem 2rem;
+  padding: 0 clamp(1.25rem, 4vw, 2rem) 2rem;
+  width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  border: 1px solid #ddd;
-  border-radius: 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-rest);
 }
 
 /* --- Top bar --- */
@@ -417,21 +420,21 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 0;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .lang-badge {
   font-size: 0.8rem;
-  font-weight: bold;
-  background-color: #e1f5ee;
-  color: #0F6E56;
-  padding: 0.2rem 0.65rem;
-  border-radius: 12px;
+  font-weight: 700;
+  background-color: var(--brand-tint);
+  color: var(--brand-deep);
+  padding: 0.2rem 0.7rem;
+  border-radius: var(--radius-pill);
 }
 
 .timer {
   font-size: 0.85rem;
-  color: #999;
+  color: var(--text-faint);
   font-variant-numeric: tabular-nums;
 }
 
@@ -455,22 +458,22 @@ onUnmounted(() => {
 }
 
 .pulse-idle {
-  background-color: #252525;
-  border: 1px solid #ddd;
+  background-color: var(--brand-tint);
+  border: 1px solid var(--brand-tint-2);
 }
 
 .pulse-active {
-  background-color: #e1f5ee;
-  animation: pulse 2s ease-in-out infinite;
+  background-color: var(--brand-tint);
+  animation: pulse 2.6s ease-in-out infinite;
 }
 
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(29, 158, 117, 0.25); }
-  50% { box-shadow: 0 0 0 18px rgba(29, 158, 117, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 var(--brand-pulse); }
+  50% { box-shadow: 0 0 0 18px var(--brand-pulse-0); }
 }
 
 .mic-icon {
-  color: #999;
+  color: var(--brand-deep);
 }
 
 .wave-bars {
@@ -483,7 +486,7 @@ onUnmounted(() => {
 .wave-bar {
   width: 4px;
   border-radius: 2px;
-  background-color: #1D9E75;
+  background-color: var(--brand);
 }
 
 .wb1 { height: 12px; animation: wb 0.8s ease-in-out infinite; }
@@ -499,38 +502,38 @@ onUnmounted(() => {
 
 .status-text {
   font-size: 1rem;
-  color: #666;
+  color: var(--text-body);
 }
 
 button {
   padding: 0.6rem 1.75rem;
   font-size: 1rem;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   border: none;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .btn-start {
-  background-color: #1D9E75;
+  background-color: var(--brand);
   color: white;
 }
 
 .btn-start:hover {
-  background-color: #0F6E56;
+  background-color: var(--brand-deep);
 }
 
 .btn-stop {
-  background-color: #E24B4A;
+  background-color: var(--danger);
   color: white;
 }
 
 .btn-stop:hover {
-  background-color: #A32D2D;
+  background-color: var(--danger-deep);
 }
 
 .btn-connecting {
-  background-color: #888;
+  background-color: var(--text-muted);
   color: white;
   cursor: not-allowed;
 }
@@ -543,16 +546,16 @@ button {
 
 .transcript-label {
   font-size: 0.75rem;
-  font-weight: bold;
-  color: #999;
+  font-weight: 700;
+  color: var(--text-faint);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.08em;
   margin: 0 0 0.5rem;
 }
 
 .empty-transcript {
   font-size: 0.85rem;
-  color: #bbb;
+  color: var(--text-muted);
   text-align: center;
   padding: 1.5rem 0;
 }
@@ -566,36 +569,36 @@ button {
 }
 
 .t-msg {
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius-control);
   max-width: 85%;
 }
 
 .t-user {
-  background-color: #e1f5ee;
+  background-color: var(--brand-tint);
   align-self: flex-end;
 }
 
 .t-assistant {
-  background-color: #f5f5f5;
+  background-color: var(--surface-hover);
   align-self: flex-start;
 }
 
 .t-role {
   font-size: 0.7rem;
-  font-weight: bold;
-  color: #0F6E56;
+  font-weight: 700;
+  color: var(--brand-deep);
   margin-bottom: 0.15rem;
 }
 
 .t-assistant .t-role {
-  color: #999;
+  color: var(--text-muted);
 }
 
 .t-content {
   margin: 0;
   font-size: 0.85rem;
-  color: #333;
+  color: var(--text-strong);
   line-height: 1.5;
 }
 
@@ -625,18 +628,18 @@ button {
 }
 
 .toggle-btn {
-  padding: 0.2rem 0.6rem;
+  padding: 0.25rem 0.7rem;
   font-size: 0.75rem;
   background: none;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  color: #666;
+  border: 1.5px solid var(--border-control);
+  border-radius: var(--radius-pill);
+  color: var(--text-body);
   cursor: pointer;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .toggle-btn:hover {
-  border-color: #999;
-  color: #333;
+  border-color: var(--brand);
+  color: var(--brand-deep);
 }
 </style>

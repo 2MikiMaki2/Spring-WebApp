@@ -109,7 +109,7 @@ async function loginAsGuest() {
 
 <template>
   <main>
-    <h1>Language Practice</h1>
+    <h1>frenchat</h1>
     <p class="subtitle">Sign in to get started</p>
 
     <div v-show="isLoading" class="loading">Loading...</div>
@@ -128,7 +128,7 @@ async function loginAsGuest() {
       {{ isGuestLoading ? 'Starting...' : 'Try as Guest' }}
     </button>
 
-    <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="fc-error login-error">{{ errorMessage }}</p>
   </main>
 </template>
 
@@ -137,31 +137,30 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 4rem 2rem;
+  justify-content: center;
+  min-height: 70vh;
+  padding: clamp(2rem, 6vw, 4rem) 0;
 }
 
 h1 {
-  margin-bottom: 0.5rem;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 7vw, 3.8rem);
+  color: var(--brand);
+  margin-bottom: 0.4rem;
 }
 
 .subtitle {
-  color: #888;
+  color: var(--text-muted);
   margin-bottom: 2rem;
 }
 
 .loading {
-  color: #888;
+  color: var(--text-muted);
 }
 
-.error {
-  color: #c44b4b;
+.login-error {
   margin-top: 1rem;
-}
-
-@media (max-width: 768px) {
-  main {
-    padding: 2rem 1rem;
-  }
 }
 
 .divider {
@@ -169,8 +168,8 @@ h1 {
   align-items: center;
   width: 100%;
   max-width: 230px;
-  margin: 1rem 0;
-  color: #aaa;
+  margin: 1.25rem 0;
+  color: var(--text-faint);
   font-size: 0.85rem;
 }
 
@@ -178,7 +177,7 @@ h1 {
 .divider::after {
   content: '';
   flex: 1;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border);
 }
 
 .divider span {
@@ -186,22 +185,25 @@ h1 {
 }
 
 .guest-btn {
-  padding: 0.6rem 1.5rem;
+  padding: 0.65rem 1.6rem;
   font-size: 0.95rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  font-weight: 500;
+  border: 1.5px solid var(--border-control);
+  border-radius: var(--radius-control);
   background: none;
-  color: #666;
+  color: var(--text-body);
   cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
 .guest-btn:hover:not(:disabled) {
-  border-color: #999;
-  color: #333;
+  border-color: var(--brand);
+  background-color: var(--brand-tint);
+  color: var(--brand-deep);
 }
 
 .guest-btn:disabled {
-  color: #aaa;
+  color: var(--text-faint);
   cursor: not-allowed;
 }
 </style>

@@ -79,12 +79,12 @@ async function deleteConversation() {
 
     <div v-if="isLoading" class="loading">Loading conversation...</div>
 
-    <div v-else-if="errorMessage" class="error">{{ errorMessage }}</div>
+    <div v-else-if="errorMessage" class="fc-error">{{ errorMessage }}</div>
 
     <template v-else-if="conversation">
       <div class="conversation-header">
         <div class="header-left">
-          <span class="mode-badge" :class="conversation.mode">{{ conversation.mode }}</span>
+          <span class="fc-badge" :class="conversation.mode">{{ conversation.mode }}</span>
           <span class="date">{{ formatDate(conversation.created_at) }}</span>
         </div>
         <button
@@ -123,17 +123,17 @@ main {
   align-self: flex-start;
   margin-bottom: 1rem;
   text-decoration: none;
-  color: #4a9c6d;
+  color: var(--brand);
+  font-weight: 600;
   font-size: 0.9rem;
 }
 
 .back-link:hover {
-  text-decoration: underline;
+  color: var(--brand-deep);
 }
 
-.loading,
-.error {
-  color: #888;
+.loading {
+  color: var(--text-muted);
 }
 
 .conversation-header {
@@ -151,47 +151,31 @@ main {
   gap: 1rem;
 }
 
-.mode-badge {
-  font-size: 0.75rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-}
-
-.mode-badge.voice {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-}
-
-.mode-badge.text {
-  background-color: #e3f2fd;
-  color: #1565c0;
-}
-
 .date {
-  font-size: 0.85rem;
-  color: #999;
+  font-size: 0.86rem;
+  color: var(--text-faint);
 }
 
 .delete-btn {
-  padding: 0.35rem 0.9rem;
+  padding: 0.4rem 1rem;
   font-size: 0.85rem;
+  font-weight: 500;
   background: none;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  color: #c44b4b;
+  border: 1.5px solid var(--border-control);
+  border-radius: var(--radius-control);
+  color: var(--danger);
   cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
 .delete-btn:hover:not(:disabled) {
-  border-color: #c44b4b;
-  background-color: #c44b4b;
+  border-color: var(--danger);
+  background-color: var(--danger);
   color: white;
 }
 
 .delete-btn:disabled {
-  color: #ccc;
+  color: var(--border-control);
   cursor: not-allowed;
 }
 
@@ -204,31 +188,34 @@ main {
 }
 
 .message {
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
+  padding: 0.8rem 1.05rem;
+  border-radius: var(--radius-control);
+  max-width: 85%;
 }
 
 .message.user {
-  background-color: #e8f5e9;
+  background-color: var(--brand-tint);
   align-self: flex-end;
 }
 
 .message.assistant {
-  background-color: #f5f5f5;
+  background-color: var(--accent-tint);
   align-self: flex-start;
 }
 
 .label {
-  font-size: 0.75rem;
-  font-weight: bold;
-  color: #888;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
   display: block;
   margin-bottom: 0.25rem;
 }
 
 .content {
   margin: 0;
-  color: #333;
+  color: var(--text-strong);
   line-height: 1.5;
 }
 

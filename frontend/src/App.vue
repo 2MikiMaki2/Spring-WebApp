@@ -99,14 +99,16 @@ function isActive(path) {
 <style scoped>
 /* --- Desktop top nav --- */
 .desktop-nav {
-  padding: 1rem 2rem;
-  border-bottom: 1px solid #ddd;
+  padding: 1.1rem clamp(20px, 4vw, 52px);
+  border-bottom: 1px solid var(--border);
 }
 
 .desktop-nav nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
   font-size: 1rem;
 }
 
@@ -114,26 +116,30 @@ function isActive(path) {
   display: flex;
   gap: 1.5rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .nav-links a {
   text-decoration: none;
-  color: #666;
+  color: var(--text-body);
+  font-weight: 500;
+  transition: color 0.15s ease;
 }
 
 .nav-links a.router-link-exact-active {
-  color: #4a9c6d;
-  font-weight: bold;
+  color: var(--brand);
+  font-weight: 700;
 }
 
 .nav-links a:hover {
-  color: #4a9c6d;
+  color: var(--brand);
 }
 
 .brand-link {
-  font-weight: bold !important;
-  color: #1D9E75 !important;
-  font-size: 1.1rem;
+  font-weight: 700 !important;
+  color: var(--brand) !important;
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
 }
 
 .nav-user {
@@ -143,23 +149,26 @@ function isActive(path) {
 }
 
 .user-name {
-  color: #888;
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 
 .logout-btn {
   background: none;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 0.25rem 0.75rem;
+  border: 1.5px solid var(--border-control);
+  border-radius: var(--radius-control);
+  padding: 0.4rem 0.9rem;
   font-size: 0.85rem;
-  color: #666;
+  font-weight: 500;
+  color: var(--text-body);
   cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
 .logout-btn:hover {
-  border-color: #999;
-  color: #333;
+  border-color: var(--brand);
+  background-color: var(--brand-tint);
+  color: var(--brand-deep);
 }
 
 /* --- Mobile bottom tab bar --- */
@@ -183,7 +192,8 @@ function isActive(path) {
     bottom: 0;
     left: 0;
     right: 0;
-    background: #282828;
+    background: var(--surface-raised);
+    border-top: 1px solid var(--border);
     padding: 6px 0 env(safe-area-inset-bottom, 4px);
     justify-content: space-around;
     align-items: center;
@@ -196,13 +206,14 @@ function isActive(path) {
     align-items: center;
     gap: 2px;
     text-decoration: none;
-    color: #888;
+    color: var(--text-muted);
     font-size: 10px;
+    font-weight: 500;
     padding: 4px 8px;
   }
 
   .tab.active {
-    color: #1D9E75;
+    color: var(--brand);
   }
 }
 </style>

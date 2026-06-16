@@ -94,7 +94,7 @@ function logout() {
 
     <div v-if="isLoading" class="loading">Loading preferences...</div>
 
-    <div v-else-if="loadError" class="error">{{ loadError }}</div>
+    <div v-else-if="loadError" class="fc-error">{{ loadError }}</div>
 
     <div v-else class="settings-form">
       <div class="field">
@@ -141,46 +141,62 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem) 0;
 }
 
 h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2rem, 4.5vw, 2.6rem);
+  color: var(--text-strong);
   margin-bottom: 1.5rem;
 }
 
 .loading {
-  color: #888;
+  color: var(--text-muted);
 }
 
 .settings-form {
   width: 100%;
-  max-width: 450px;
+  max-width: 460px;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-rest);
+  padding: clamp(1.5rem, 4vw, 2rem);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
 .field label {
   font-size: 0.9rem;
-  font-weight: bold;
-  color: #888;
+  font-weight: 600;
+  color: var(--text-body);
 }
 
 .field select,
 .field textarea {
-  padding: 0.5rem;
+  padding: 0.6rem 0.7rem;
   font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-control);
   font-family: inherit;
-  background: #fff;
-  color: #333;
+  background: var(--surface-page);
+  color: var(--text-strong);
+  transition: border-color 0.15s ease;
+}
+
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--brand);
 }
 
 .field textarea {
@@ -188,28 +204,31 @@ h1 {
 }
 
 .save-btn {
-  padding: 0.6rem 1.5rem;
+  padding: 0.65rem 1.6rem;
   font-size: 1rem;
-  background-color: #4a9c6d;
+  font-weight: 600;
+  background-color: var(--brand);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   cursor: pointer;
   align-self: flex-start;
+  transition: background-color 0.15s ease;
 }
 
 .save-btn:hover:not(:disabled) {
-  background-color: #3d8259;
+  background-color: var(--brand-deep);
 }
 
 .save-btn:disabled {
-  background-color: #ccc;
+  background-color: var(--border-control);
   cursor: not-allowed;
 }
 
 .save-message {
   font-size: 0.9rem;
-  color: #4a9c6d;
+  font-weight: 600;
+  color: var(--accent-deep);
 }
 
 .mobile-logout-btn {
@@ -220,23 +239,20 @@ h1 {
   .mobile-logout-btn {
     display: block;
     margin-top: 1rem;
-    padding: 0.6rem 1.5rem;
+    padding: 0.65rem 1.6rem;
     font-size: 1rem;
+    font-weight: 500;
     background: none;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    color: #666;
+    border: 1.5px solid var(--border-control);
+    border-radius: var(--radius-control);
+    color: var(--text-body);
     cursor: pointer;
     align-self: flex-start;
   }
 
   .mobile-logout-btn:hover {
-    border-color: #999;
-    color: #333;
+    border-color: var(--brand);
+    color: var(--brand-deep);
   }
-}
-
-.error {
-  color: #c44b4b;
 }
 </style>

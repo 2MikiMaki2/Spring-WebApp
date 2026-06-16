@@ -65,13 +65,13 @@ function formatRelativeDate(isoString) {
 
 <template>
   <main>
-    <h1>{{ greeting }}, {{ userName }}</h1>
+    <h1 class="greeting">{{ greeting }}, {{ userName }}</h1>
     <p class="subtitle">Ready to practice? Pick a mode to get started.</p>
 
     <div class="mode-links">
-      <RouterLink to="/voice" class="mode-card">
+      <RouterLink to="/voice" class="mode-card mode-card-voice">
         <div class="mode-icon voice-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
             <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
             <line x1="12" y1="19" x2="12" y2="23"/>
@@ -81,9 +81,9 @@ function formatRelativeDate(isoString) {
         <span class="mode-desc">Speak and listen in real time</span>
       </RouterLink>
 
-      <RouterLink to="/text" class="mode-card">
+      <RouterLink to="/text" class="mode-card mode-card-text">
         <div class="mode-icon text-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="2" stroke-linecap="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
         </div>
@@ -93,9 +93,9 @@ function formatRelativeDate(isoString) {
     </div>
 
     <div v-if="!isGuest" class="recent-section">
-      <p class="recent-heading">Recent conversations</p>
+      <p class="fc-section-label recent-heading">Recent conversations</p>
 
-      <p v-if="loadError" class="error">{{ loadError }}</p>
+      <p v-if="loadError" class="fc-error">{{ loadError }}</p>
       <template v-if="recentConversations.length > 0">
       <div class="recent-list">
         <RouterLink
@@ -105,13 +105,13 @@ function formatRelativeDate(isoString) {
           class="recent-item"
         >
           <div class="recent-left">
-            <span class="mode-badge" :class="conv.mode">{{ conv.mode }}</span>
+            <span class="fc-badge" :class="conv.mode">{{ conv.mode }}</span>
             <span class="recent-preview">{{ conv.preview || 'No preview available' }}</span>
           </div>
           <span class="recent-date">{{ formatRelativeDate(conv.created_at) }}</span>
         </RouterLink>
       </div>
-      <RouterLink to="/history" class="view-all-link">View all history</RouterLink>
+      <RouterLink to="/history" class="view-all-link">View all history <span class="arrow">&rarr;</span></RouterLink>
       </template>
       <p v-else class="empty-recent">Your recent conversations will show up here.</p>
     </div>
@@ -123,86 +123,108 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 3rem 2rem 2rem;
+  padding: clamp(2rem, 6vw, 3.5rem) 0 2rem;
 }
 
-h1 {
-  font-size: 1.75rem;
-  margin: 0 0 0.25rem;
+.greeting {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.4rem, 5.6vw, 3.6rem);
+  line-height: 1.1;
+  color: var(--text-strong);
+  margin: 0 0 0.4rem;
+  text-align: center;
 }
 
 .subtitle {
-  color: #666;
+  color: var(--text-muted);
   margin: 0 0 2.5rem;
+  text-align: center;
 }
 
 .mode-links {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2.5rem;
+  width: 100%;
+  max-width: 620px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.1rem;
+  margin-bottom: 3rem;
 }
 
 .mode-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.5rem 2.5rem;
-  border: 1px solid #ddd;
-  border-radius: 12px;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-rest);
   text-decoration: none;
   color: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .mode-card:hover {
-  border-color: #4a9c6d;
-  box-shadow: 0 2px 8px rgba(74, 156, 109, 0.15);
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+}
+
+.mode-card-voice:hover {
+  border-color: var(--brand-tint-2);
+}
+
+.mode-card-text:hover {
+  border-color: var(--accent-tint-2);
 }
 
 .mode-icon {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .voice-icon {
-  background-color: #e1f5ee;
+  background-color: var(--brand-tint);
+  color: var(--brand-deep);
 }
 
 .text-icon {
-  background-color: #e6f1fb;
+  background-color: var(--accent-tint);
+  color: var(--accent-deep);
 }
 
 .mode-title {
-  font-size: 1.1rem;
-  font-weight: bold;
-  margin-bottom: 0.25rem;
+  font-size: 1.32rem;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin-bottom: 0.35rem;
 }
 
 .mode-desc {
-  font-size: 0.85rem;
-  color: #888;
+  font-size: 0.9rem;
+  color: var(--text-muted);
 }
 
 .recent-section {
   width: 100%;
-  max-width: 480px;
+  max-width: 520px;
 }
 
 .recent-heading {
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: #888;
-  margin: 0 0 0.6rem;
+  margin: 0 0 0.7rem;
 }
 
 .recent-list {
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-rest);
   overflow: hidden;
 }
 
@@ -210,94 +232,66 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.6rem 0.85rem;
+  padding: 0.85rem 1.1rem;
   text-decoration: none;
   color: inherit;
-  transition: background-color 0.15s;
+  transition: background-color 0.15s ease;
 }
 
 .recent-item:not(:last-child) {
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .recent-item:hover {
-  background-color: #f9f9f9;
+  background-color: var(--surface-hover);
 }
 
 .recent-left {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   overflow: hidden;
 }
 
-.mode-badge {
-  font-size: 0.7rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-
-.mode-badge.voice {
-  background-color: #e1f5ee;
-  color: #0F6E56;
-}
-
-.mode-badge.text {
-  background-color: #e6f1fb;
-  color: #185FA5;
-}
-
 .recent-preview {
-  font-size: 0.85rem;
-  color: #555;
+  font-size: 0.9rem;
+  color: var(--text-body);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .recent-date {
-  font-size: 0.75rem;
-  color: #999;
+  font-size: 0.8rem;
+  color: var(--text-faint);
   flex-shrink: 0;
   margin-left: 0.75rem;
 }
 
 .view-all-link {
-  display: inline-block;
-  margin-top: 0.5rem;
-  font-size: 0.8rem;
-  color: #1D9E75;
-  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--brand);
 }
 
 .view-all-link:hover {
-  text-decoration: underline;
+  color: var(--brand-deep);
+}
+
+.view-all-link .arrow {
+  transition: transform 0.18s ease;
+}
+
+.view-all-link:hover .arrow {
+  transform: translateX(4px);
 }
 
 .empty-recent {
-  font-size: 0.85rem;
-  color: #999;
-}
-
-@media (max-width: 768px) {
-  main {
-    padding: 1.5rem 1rem 1rem;
-  }
-  
-  .mode-links {
-    flex-direction: column;
-  }
-
-  .mode-card {
-    padding: 1.25rem 1.5rem;
-  }
-}
-
-.error {
-  color: #c44b4b;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
 }
 </style>
