@@ -50,11 +50,11 @@ const mission =
     <footer class="footer">
       <BrandLogo size="sm" />
       <nav class="footer-links">
-        <a href="#" target="_blank" rel="noopener" class="footer-link footer-link-linkedin">
+        <a href="https://www.linkedin.com/in/maksim-pavlicic-874763218/" target="_blank" rel="noopener" class="footer-link footer-link-linkedin">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M4.98 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM3 9h4v12H3zM9 9h3.8v1.7h.05c.53-.95 1.83-1.95 3.76-1.95 4.02 0 4.76 2.5 4.76 5.76V21h-4v-5.1c0-1.22-.02-2.78-1.7-2.78-1.7 0-1.96 1.32-1.96 2.69V21H9z"/></svg>
           LinkedIn
         </a>
-        <a href="#" target="_blank" rel="noopener" class="footer-link footer-link-photo">
+        <a href="https://maksim.pavlicic.me/" target="_blank" rel="noopener" class="footer-link footer-link-photo">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg>
           Photography
         </a>
