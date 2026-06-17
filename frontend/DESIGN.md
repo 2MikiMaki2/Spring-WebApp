@@ -92,6 +92,9 @@ hover.
 
 - **Display / greeting:** `Instrument Serif` (400, occasional italic) — used for
   the "Bonjour, {name}" greeting to add warmth and personality.
+- **Logo / wordmark:** `Baloo 2` (700) — rounded, friendly display face used
+  *only* for the "frenchat" wordmark (nav + footers). Keeps the brand mark warm
+  and distinct from UI text.
 - **UI / body:** `Hanken Grotesk` (400/500/600/700), then system stack
   (`-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`).
 - **Rendering:** antialiased, `text-rendering: optimizeLegibility`.
@@ -103,7 +106,23 @@ hover.
 
 ---
 
-## 5. Shape, spacing, motion
+## 4b. Logo / brand mark
+
+The wordmark **frenchat** is set in **Baloo 2 700**, colored brand coral
+`#EE8A5F`. It is paired with a **"typing…" chat-bubble logomark**:
+
+- A white rounded speech bubble (`border-radius: 12px 12px 12px 4px` — the small
+  bottom-left corner is the chat tail), `2px` border in `#F0E0D0`.
+- Three dots inside: coral `#EE8A5F`, light-coral `#F0A877`, and warm-dark
+  `#2E2A26` (the third dot is intentionally dark, not teal, for contrast).
+- The mark scales: ~42×35px bubble in the home/welcome nav, ~34×29px in footers.
+
+> The earlier coral mic tile is retired as the primary logo. The mic icon lives
+> on only as the **voice-mode** affordance, not the brand mark.
+
+---
+
+## 4c. Typography
 
 - **Container:** main column max-width `980px`, centered; page padding
   `clamp(20px, 4vw, 52px)`.
@@ -139,7 +158,7 @@ hover.
 
 | Component / view | Dominant colors |
 |------------------|-----------------|
-| Nav | coral wordmark `#EE8A5F`, warm neutrals, `#F0E6D7` border |
+| Nav | logo: typing-bubble mark + Baloo 2 coral wordmark `#EE8A5F`, warm neutrals, `#F0E6D7` border |
 | Voice card | coral `#EE8A5F` + tint `#FCEAE0`, pulse ring |
 | Text card | teal `#3FA095` + tint `#E5F3F0` |
 | Greeting | serif `text-strong #2E2A26`, muted subtitle `#9A8F80` |
@@ -193,6 +212,7 @@ hover.
 
 /* type */
 --font-display:   'Instrument Serif', Georgia, serif;
+--font-logo:      'Baloo 2', sans-serif;
 --font-ui:        'Hanken Grotesk', -apple-system, sans-serif;
 
 /* shape */

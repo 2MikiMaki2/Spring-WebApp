@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { RouterLink, RouterView, useRouter, useRoute } from 'vue-router'
+import BrandLogo from './components/BrandLogo.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -37,7 +38,7 @@ function isActive(path) {
   <header v-if="isLoggedIn" class="desktop-nav">
     <nav>
       <div class="nav-links">
-        <RouterLink to="/" class="brand-link">frenchat</RouterLink>
+        <RouterLink to="/" class="brand-link"><BrandLogo size="md" /></RouterLink>
         <RouterLink to="/voice">Voice</RouterLink>
         <RouterLink to="/text">Text</RouterLink>
         <RouterLink v-if="!isGuest" to="/history">History</RouterLink>
@@ -136,10 +137,9 @@ function isActive(path) {
 }
 
 .brand-link {
-  font-weight: 700 !important;
-  color: var(--brand) !important;
-  font-size: 1.2rem;
-  letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
+  margin-right: 0.5rem;
 }
 
 .nav-user {

@@ -5,6 +5,11 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/welcome',
+      name: 'welcome',
+      component: () => import('../views/WelcomeView.vue'),
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../views/LoginView.vue'),
@@ -42,10 +47,19 @@ const router = createRouter({
   ],
 })
 
+// Pages reachable without being signed in.
+const PUBLIC_PAGES = ['welcome', 'login']
+
 router.beforeEach((to) => {
   const token = localStorage.getItem('token')
-  if (!token && to.name !== 'login') {
-    return { name: 'login' }
+  if (!token && !PUBLIC_PAGES.includes(to.name)) {
+    // Logged-out visitors land on the welcome page.
+    return { name: 'welcome' }
+  }
+
+  // Signed-in users have no reason to see the marketing/login pages.
+  if (token && PUBLIC_PAGES.includes(to.name)) {
+    return { name: 'home' }
   }
 
   const isGuest = localStorage.getItem('isGuest') === 'true'

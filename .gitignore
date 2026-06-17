@@ -14,4 +14,4 @@ deployment-steps.txt
 backend/.env
 
 # MISC
-frenchat Home.html
+*.html
