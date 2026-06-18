@@ -71,7 +71,7 @@ function formatRelativeDate(isoString) {
     <div class="mode-links">
       <RouterLink to="/voice" class="mode-card mode-card-voice">
         <div class="mode-icon voice-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
             <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
             <line x1="12" y1="19" x2="12" y2="23"/>
@@ -83,7 +83,7 @@ function formatRelativeDate(isoString) {
 
       <RouterLink to="/text" class="mode-card mode-card-text">
         <div class="mode-icon text-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
         </div>
@@ -120,6 +120,8 @@ function formatRelativeDate(isoString) {
 
 <style scoped>
 main {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -137,6 +139,7 @@ main {
 }
 
 .subtitle {
+  font-size: clamp(1rem, 1.7vw, 1.18rem);
   color: var(--text-muted);
   margin: 0 0 2.5rem;
   text-align: center;
@@ -144,10 +147,10 @@ main {
 
 .mode-links {
   width: 100%;
-  max-width: 620px;
+  max-width: 820px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: clamp(16px, 2.4vw, 24px);
   margin-bottom: 3rem;
 }
 
@@ -156,7 +159,7 @@ main {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 2rem 1.5rem;
+  padding: clamp(30px, 4vw, 42px) 28px;
   background: var(--surface-raised);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
@@ -167,7 +170,7 @@ main {
 }
 
 .mode-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-6px);
   box-shadow: var(--shadow-hover);
 }
 
@@ -180,18 +183,19 @@ main {
 }
 
 .mode-icon {
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.9rem;
 }
 
 .voice-icon {
   background-color: var(--brand-tint);
-  color: var(--brand-deep);
+  color: var(--brand);
+  animation: fc-pulse 2.6s ease-out infinite;
 }
 
 .text-icon {
@@ -207,13 +211,13 @@ main {
 }
 
 .mode-desc {
-  font-size: 0.9rem;
+  font-size: 0.98rem;
   color: var(--text-muted);
 }
 
 .recent-section {
   width: 100%;
-  max-width: 520px;
+  max-width: 780px;
 }
 
 .recent-heading {

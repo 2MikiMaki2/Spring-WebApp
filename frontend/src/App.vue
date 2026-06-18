@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import { RouterLink, RouterView, useRouter, useRoute } from 'vue-router'
 import BrandLogo from './components/BrandLogo.vue'
+import FacetBackdrop from './components/FacetBackdrop.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -34,6 +35,9 @@ function isActive(path) {
 </script>
 
 <template>
+  <!-- Shared faceted backdrop — fixed behind every page (DESIGN §6b) -->
+  <FacetBackdrop />
+
   <!-- Desktop top nav -->
   <header v-if="isLoggedIn" class="desktop-nav">
     <nav>
@@ -51,7 +55,7 @@ function isActive(path) {
     </nav>
   </header>
 
-  <div :class="{ 'has-tab-bar': isLoggedIn }">
+  <div class="page-shell" :class="{ 'has-tab-bar': isLoggedIn }">
     <RouterView />
   </div>
 
@@ -100,6 +104,8 @@ function isActive(path) {
 <style scoped>
 /* --- Desktop top nav --- */
 .desktop-nav {
+  position: relative;
+  z-index: 2;
   padding: 1.1rem clamp(20px, 4vw, 52px);
   border-bottom: 1px solid var(--border);
 }
@@ -169,6 +175,12 @@ function isActive(path) {
   border-color: var(--brand);
   background-color: var(--brand-tint);
   color: var(--brand-deep);
+}
+
+/* Routed pages sit above the fixed faceted backdrop (z-index 0). */
+.page-shell {
+  position: relative;
+  z-index: 1;
 }
 
 /* --- Mobile bottom tab bar --- */

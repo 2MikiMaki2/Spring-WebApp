@@ -21,9 +21,6 @@ const mission =
 
     <!-- HERO -->
     <section class="hero">
-      <div class="blob blob-coral"></div>
-      <div class="blob blob-teal"></div>
-
       <h1 class="hero-title">
         Learn French by <span class="hl">talking</span>, not cramming
       </h1>
@@ -67,11 +64,11 @@ const mission =
 /* Full-bleed: break out of the centered #app column so the landing spans the
    whole viewport. */
 .welcome {
+  position: relative;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
   width: 100vw;
   min-height: 100vh;
-  background: radial-gradient(130% 80% at 50% -8%, #FFF4E8 0%, #FBF6EF 44%, #F6EFE4 100%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -132,40 +129,12 @@ const mission =
 /* --- HERO --- */
 .hero {
   position: relative;
+  z-index: 1;
   padding: clamp(40px, 7vw, 92px) clamp(20px, 5vw, 64px) clamp(36px, 5vw, 64px);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-}
-
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  animation: fc-float 7s ease-in-out infinite;
-}
-
-.blob-coral {
-  top: -30px;
-  left: 6%;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle at 30% 30%, var(--brand-tint), transparent 70%);
-}
-
-.blob-teal {
-  bottom: -50px;
-  right: 8%;
-  width: 240px;
-  height: 240px;
-  background: radial-gradient(circle at 40% 40%, var(--accent-tint), transparent 70%);
-  animation-duration: 9s;
-}
-
-@keyframes fc-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
 }
 
 .hero-title {
@@ -221,6 +190,8 @@ const mission =
 
 /* --- MISSION --- */
 .mission {
+  position: relative;
+  z-index: 1;
   padding: clamp(20px, 4vw, 40px) clamp(20px, 5vw, 64px) clamp(48px, 6vw, 80px);
   display: flex;
   justify-content: center;
@@ -265,8 +236,10 @@ const mission =
 
 /* --- FOOTER --- */
 .footer {
+  position: relative;
+  z-index: 1;
   margin-top: auto;
-  border-top: 1px solid #EFE5D7;
+  border-top: 1px solid var(--border);
   padding: 30px clamp(20px, 5vw, 64px);
   display: flex;
   align-items: center;
