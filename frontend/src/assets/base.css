@@ -71,9 +71,11 @@
     linear-gradient(180deg, #FFF6EC 0%, #FBF6EF 44%, #F4ECDF 100%);
 
   /* faceted backdrop (FacetBackdrop.vue / frenchat-facets.svg, DESIGN §6b).
-     Scales with the viewport (no px cap) so the dome fills any screen size —
-     including ultra-wide monitors — seamlessly. */
-  --facet-width: 132vw;
+     Sized as a viewport "cover": 132vw fills wide/landscape screens (incl.
+     ultra-wide); on tall/portrait screens (mobile) the height-driven 160vh term
+     wins so the dome fills the full height instead of shrinking to a band.
+     The image keeps its ~1.56:1 aspect, so 160vh width => ~102vh height. */
+  --facet-width: max(132vw, 160vh);
   --facet-teal-wash: radial-gradient(circle at 50% 45%, rgba(63, 160, 149, 0.12), rgba(63, 160, 149, 0) 72%);
 }
 
