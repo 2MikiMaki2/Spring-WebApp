@@ -70,8 +70,10 @@
     radial-gradient(120% 100% at 50% 116%, rgba(120, 90, 55, 0.1) 0%, rgba(120, 90, 55, 0) 52%),
     linear-gradient(180deg, #FFF6EC 0%, #FBF6EF 44%, #F4ECDF 100%);
 
-  /* faceted backdrop (FacetBackdrop.vue / frenchat-facets.svg, DESIGN §6b) */
-  --facet-width: min(1600px, 132vw);
+  /* faceted backdrop (FacetBackdrop.vue / frenchat-facets.svg, DESIGN §6b).
+     Scales with the viewport (no px cap) so the dome fills any screen size —
+     including ultra-wide monitors — seamlessly. */
+  --facet-width: 132vw;
   --facet-teal-wash: radial-gradient(circle at 50% 45%, rgba(63, 160, 149, 0.12), rgba(63, 160, 149, 0) 72%);
 }
 
